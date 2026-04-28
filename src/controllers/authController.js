@@ -18,6 +18,31 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+const createUserWithRole = async (req, res, next, role) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return sendError(res, 400, 'Email already registered.');
+    }
+
+    const user = await User.create({ name, email, password, role, phone });
+
+    if (role === 'driver') {
+      await Driver.create({ userId: user._id });
+    }
+
+    const tokens = generateTokens(user);
+    user.refreshToken = tokens.refreshToken;
+    await user.save();
+
+    sendResponse(res, 201, { user, ...tokens }, 'Registration successful.');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, role, phone } = req.body;
@@ -44,12 +69,15 @@ export const register = async (req, res, next) => {
   }
 };
 
-export const login = async (req, res, next) => {
+export const registerAdmin = async (req, res, next) => createUserWithRole(req, res, next, 'admin');
+export const registerDriver = async (req, res, next) => createUserWithRole(req, res, next, 'driver');
+
+const loginWithRole = async (req, res, next, expectedRole) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || (expectedRole && user.role !== expectedRole)) {
       return sendError(res, 401, 'Invalid credentials.');
     }
 
@@ -68,6 +96,10 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
+
+export const login = async (req, res, next) => loginWithRole(req, res, next);
+export const loginAdmin = async (req, res, next) => loginWithRole(req, res, next, 'admin');
+export const loginDriver = async (req, res, next) => loginWithRole(req, res, next, 'driver');
 
 export const refreshToken = async (req, res, next) => {
   try {
