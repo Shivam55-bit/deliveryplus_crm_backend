@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HUB CRM — API Documentation</title>
+<style>
+  :root {
+    --bg: #f6f8fc;
+    --surface: #ffffff;
+    --surface2: #f1f5ff;
+    --border: #d7deee;
+    --text: #1f2937;
+    --muted: #64748b;
+    --green: #15803d;
+    --blue: #1d4ed8;
+    --orange: #b45309;
+    --red: #b91c1c;
+    --purple: #6d28d9;
+    --yellow: #a16207;
+    --cyan: #0e7490;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border);
+    height: 100vh; overflow-y: auto; position: sticky; top: 0;
+  }
+  #sidebar h1 { padding: 24px 20px 8px; font-size: 18px; font-weight: 700; color: var(--text); }
+  #sidebar p { padding: 0 20px 20px; font-size: 12px; color: var(--muted); }
+  .nav-section { padding: 10px 20px 4px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .nav-link { display: block; padding: 7px 20px; font-size: 13px; color: var(--muted); text-decoration: none; border-left: 3px solid transparent; transition: all .15s; }
+  .nav-link:hover, .nav-link.active { color: var(--text); background: var(--surface2); border-left-color: var(--blue); }
+
+  /* Main */
+  #main { flex: 1; padding: 40px 48px; max-width: 960px; overflow-y: auto; }
+  .section { margin-bottom: 64px; }
+  .section-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .section-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+  /* Base URL box */
+  .base-url { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-family: monospace; font-size: 14px; color: var(--cyan); margin-bottom: 32px; }
+  .base-url span { color: var(--muted); font-family: sans-serif; font-size: 12px; display: block; margin-bottom: 4px; }
+
+  /* Endpoint card */
+  .endpoint { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .endpoint-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; user-select: none; }
+  .endpoint-header:hover { background: var(--surface2); }
+  .method { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 5px; min-width: 54px; text-align: center; letter-spacing: .5px; }
+  .GET    { background: #dcfce7; color: var(--green); }
+  .POST   { background: #dbeafe; color: var(--blue); }
+  .PUT    { background: #ffedd5; color: var(--orange); }
+  .DELETE { background: #fee2e2; color: var(--red); }
+  .PATCH  { background: #ede9fe; color: var(--purple); }
+  .path { font-family: monospace; font-size: 14px; color: var(--text); flex: 1; }
+  .summary { font-size: 13px; color: var(--muted); margin-left: auto; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .badge-admin  { background: #ede9fe; color: var(--purple); }
+  .badge-driver { background: #dcfce7; color: var(--green); }
+  .badge-any    { background: #e0f2fe; color: var(--cyan); }
+
+  .endpoint-body { display: none; padding: 18px; border-top: 1px solid var(--border); font-size: 13px; }
+  .endpoint-body.open { display: block; }
+
+  /* Body sections */
+  .body-section { margin-bottom: 16px; }
+  .body-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+  pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; font-family: monospace; font-size: 12px; color: #0f172a; overflow-x: auto; line-height: 1.6; }
+  .params-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .params-table th { text-align: left; padding: 6px 10px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+  .params-table td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
+  .params-table tr:last-child td { border-bottom: none; }
+  .req { color: var(--red); font-size: 10px; }
+  .opt { color: var(--muted); font-size: 10px; }
+  code { background: #eaf2ff; padding: 1px 5px; border-radius: 3px; font-family: monospace; color: var(--cyan); font-size: 12px; }
+
+  /* Auth box */
+  .auth-box { background: var(--surface2); border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+  .auth-box h3 { font-size: 14px; margin-bottom: 8px; color: var(--yellow); }
+  .auth-box p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* Status flow */
+  .status-flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 0; }
+  .status-bubble { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .s-pending    { background: #fef3c7; color: var(--yellow); }
+  .s-assigned   { background: #dbeafe; color: var(--blue); }
+  .s-transit    { background: #ede9fe; color: var(--purple); }
+  .s-started    { background: #dcfce7; color: var(--green); }
+  .s-paused     { background: #ffedd5; color: var(--orange); }
+  .s-completed  { background: #dcfce7; color: #166534; }
+  .s-cancelled  { background: #fee2e2; color: var(--red); }
+  .arrow { color: var(--muted); font-size: 16px; }
+
+  /* Rate limit info */
+  .rate-info { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: var(--yellow); }
+  .rate-info span { color: var(--muted); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    #sidebar { display: none; }
+    #main { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <h1>HUB CRM</h1>
+  <p>API Documentation v1.0</p>
+
+  <div class="nav-section">Overview</div>
+  <a class="nav-link" href="#overview">Base URL & Auth</a>
+  <a class="nav-link" href="#job-flow">Job Status Flow</a>
+  <a class="nav-link" href="#rate-limits">Rate Limits</a>
+
+  <div class="nav-section">Auth</div>
+  <a class="nav-link" href="#auth">Authentication</a>
+
+  <div class="nav-section">Admin</div>
+  <a class="nav-link" href="#jobs">Jobs</a>
+  <a class="nav-link" href="#customers">Customers</a>
+  <a class="nav-link" href="#vehicles">Vehicles</a>
+  <a class="nav-link" href="#invoices">Invoices</a>
+  <a class="nav-link" href="#users">Users</a>
+  <a class="nav-link" href="#dashboard">Dashboard</a>
+  <a class="nav-link" href="#crm">CRM</a>
+
+  <div class="nav-section">Driver App</div>
+  <a class="nav-link" href="#driver">Driver Workflow</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div id="main">
+
+  <!-- OVERVIEW -->
+  <div class="section" id="overview">
+    <div class="section-title">HUB CRM — API Docs</div>
+    <div class="section-desc">Moving & Delivery Business — Backend API Reference</div>
+
+    <div class="base-url">
+      <span>Base URL</span>
+      http://localhost:5000/api
+    </div>
+
+    <div class="auth-box">
+      <h3>🔐 Authentication</h3>
+      <p>Sabhi protected routes pe <code>Authorization</code> header bhejni hogi:</p>
+      <pre>Authorization: Bearer &lt;access_token&gt;</pre>
+      <p style="margin-top:8px">Token login ya register se milega. Token expire hone pe <code>/auth/refresh-token</code> use karo.</p>
+    </div>
+
+    <div class="auth-box" style="border-color:#2d3a4a">
+      <h3 style="color:var(--cyan)">👤 Roles</h3>
+      <p>
+        <code>admin</code> — Full access (job create, assign, reports)<br/>
+        <code>driver</code> — Only driver workflow APIs<br/>
+        <code>customer</code> — Limited access
+      </p>
+    </div>
+  </div>
+
+  <!-- JOB STATUS FLOW -->
+  <div class="section" id="job-flow">
+    <div class="section-title">Job Status Flow</div>
+    <div class="section-desc">Job lifecycle — ek direction mein hi move karta hai</div>
+    <div class="status-flow">
+      <span class="status-bubble s-pending">pending</span>
+      <span class="arrow">→</span>
+      <span class="status-bubble s-assigned">assigned</span>
+      <span class="arrow">→</span>
+      <span class="status-bubble s-transit">in_transit</span>
+      <span class="arrow">→</span>
+      <span class="status-bubble s-started">started</span>
+      <span class="arrow">⇌</span>
+      <span class="status-bubble s-paused">paused</span>
+      <span class="arrow">→</span>
+      <span class="status-bubble s-completed">completed</span>
+    </div>
+    <div class="status-flow" style="margin-top:4px">
+      <span class="status-bubble s-cancelled">cancelled</span>
+      <span style="font-size:13px;color:var(--muted)">— Admin kisi bhi stage pe cancel kar sakta hai</span>
+    </div>
+  </div>
+
+  <!-- RATE LIMITS -->
+  <div class="section" id="rate-limits">
+    <div class="section-title">Rate Limits</div>
+    <div class="rate-info">
+      ⚡ <strong>/api/auth/*</strong> — Max <strong>10 requests</strong> per 15 minutes (brute force protection)<br/>
+      <span>⚡ <strong>All other /api/*</strong> — Max <strong>200 requests</strong> per 15 minutes per IP</span>
+    </div>
+    <pre>{
+  "success": false,
+  "message": "Too many login attempts, please try again after 15 minutes."
+}</pre>
+  </div>
+
+  <!-- AUTH -->
+  <div class="section" id="auth">
+    <div class="section-title">Authentication</div>
+    <div class="section-desc">Login, register, token refresh</div>
+
+    <!-- Register -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/register</span>
+        <span class="summary">New user register</span>
+        <span class="badge badge-any">Public</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "name": "Ali Khan",
+  "email": "ali@example.com",
+  "password": "pass123",
+  "role": "driver",         // optional: admin | driver | customer (default: customer)
+  "phone": "0400000000"     // optional
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 201</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "Ali Khan", "email": "...", "role": "driver" },
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/login</span>
+        <span class="summary">Login karo</span>
+        <span class="badge badge-any">Public</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "email": "admin@hubcrm.com",
+  "password": "admin123"
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "Admin", "role": "admin" },
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refresh Token -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/refresh-token</span>
+        <span class="summary">Naya access token lo</span>
+        <span class="badge badge-any">Public</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{ "refreshToken": "eyJhbGci..." }</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{ "success": true, "data": { "accessToken": "eyJhbGci..." } }</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Get Me -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/auth/me</span>
+        <span class="summary">Current user info</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "...", "email": "...", "role": "admin", "phone": "..." }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOBS -->
+  <div class="section" id="jobs">
+    <div class="section-title">Jobs</div>
+    <div class="section-desc">Job create, manage, assign — Admin ke liye</div>
+
+    <!-- Create Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs</span>
+        <span class="summary">Naya job create karo</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "customerName": "John Smith",          // required
+  "customerPhone": "0412345678",         // required
+  "customerEmail": "john@email.com",     // optional
+  "customerId": "64abc...",              // optional — existing customer link
+  "pickup": {
+    "address": "12 Main St",             // required
+    "suburb": "Sydney",
+    "state": "NSW",
+    "postcode": "2000",
+    "notes": "Ring doorbell"
+  },
+  "dropoff": {
+    "address": "45 Park Ave",            // required
+    "suburb": "Parramatta",
+    "state": "NSW",
+    "postcode": "2150"
+  },
+  "jobType": "moving",                   // required: "delivery" | "moving"
+  "scheduledDate": "2026-04-25",         // required
+  "scheduledTime": "09:00",
+  "pricingType": "hourly",               // "hourly" | "fixed"
+  "hourlyRate": 120,                     // if pricingType = hourly
+  "estimatedHours": 4,
+  "fixedQuote": 500,                     // if pricingType = fixed
+  "notes": "Fragile items, 2nd floor, no lift",
+  "priority": "high"                     // low | medium | high | urgent
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 201</h4>
+          <pre>{
+  "success": true,
+  "message": "Job created.",
+  "data": { "job": { "_id": "...", "jobNumber": "JOB-00001", "status": "pending", ... } }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Get All Jobs -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/jobs</span>
+        <span class="summary">Sabhi jobs list (filter + paginate)</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Parameters</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Type</th><th>Example</th><th></th></tr>
+            <tr><td><code>page</code></td><td>number</td><td>1</td><td class="opt">optional</td></tr>
+            <tr><td><code>limit</code></td><td>number</td><td>20</td><td class="opt">optional</td></tr>
+            <tr><td><code>status</code></td><td>string</td><td>pending</td><td class="opt">optional</td></tr>
+            <tr><td><code>jobType</code></td><td>string</td><td>moving</td><td class="opt">optional</td></tr>
+            <tr><td><code>dateFrom</code></td><td>date</td><td>2026-04-01</td><td class="opt">optional</td></tr>
+            <tr><td><code>dateTo</code></td><td>date</td><td>2026-04-30</td><td class="opt">optional</td></tr>
+            <tr><td><code>search</code></td><td>string</td><td>John</td><td class="opt">optional</td></tr>
+          </table>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "jobs": [ { "jobNumber": "JOB-00001", "status": "pending", ... } ],
+    "pagination": { "total": 50, "page": 1, "limit": 20, "totalPages": 3 }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Get Single Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/jobs/:id</span>
+        <span class="summary">Single job full detail</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "job": {
+      "_id": "...", "jobNumber": "JOB-00001", "status": "started",
+      "customerName": "John", "customerPhone": "0412...",
+      "pickup": { "address": "12 Main St", "suburb": "Sydney" },
+      "dropoff": { "address": "45 Park Ave", "suburb": "Parramatta" },
+      "assignedDrivers": [ { "_id": "...", "name": "Ali", "phone": "..." } ],
+      "assignedVehicle": { "_id": "...", "name": "Van 1", "registration": "ABC123" },
+      "timerStarted": "2026-04-22T09:00:00Z",
+      "billing": { "laborCost": 480, "gst": 48, "totalAmount": 528 },
+      "timeline": [ { "action": "created", "timestamp": "..." } ]
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/jobs/:id</span>
+        <span class="summary">Job update karo</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body (any fields to update)</h4>
+          <pre>{
+  "notes": "Updated notes",
+  "scheduledDate": "2026-04-26",
+  "priority": "urgent"
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assign Drivers -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/assign</span>
+        <span class="summary">Driver(s) + Vehicle assign karo</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "driverIds": ["64abc...", "64def..."],   // required — array of driver User IDs
+  "vehicleId": "64xyz..."                  // optional
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "message": "Drivers assigned. Notifications sent.",
+  "data": { "job": { "status": "assigned", "assignedDrivers": [...] } }
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Side Effects</h4>
+          <p style="color:var(--muted);font-size:13px">✅ Driver ki availability <code>busy</code> ho jaati hai<br/>✅ Notification DB mein create hoti hai<br/>✅ Job timeline mein entry hoti hai</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/cancel</span>
+        <span class="summary">Job cancel karo</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body (optional)</h4>
+          <pre>{ "reason": "Customer cancelled" }</pre>
+        </div>
+        <div class="body-section">
+          <h4>Side Effects</h4>
+          <p style="color:var(--muted);font-size:13px">✅ Drivers ki availability <code>available</code> ho jaati hai<br/>✅ Vehicle available ho jaata hai</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER WORKFLOW -->
+  <div class="section" id="driver">
+    <div class="section-title">Driver Workflow</div>
+    <div class="section-desc">Driver mobile app ke liye — Step by step job flow</div>
+
+    <!-- My Jobs -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/jobs/driver/my-jobs</span>
+        <span class="summary">Mujhe assign saare jobs</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Example</th></tr>
+            <tr><td><code>status</code></td><td>assigned, started, completed</td></tr>
+            <tr><td><code>page</code></td><td>1</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Jobs -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/jobs/driver/today</span>
+        <span class="summary">Aaj ke assigned jobs</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Aaj ki date ke jobs (scheduled) return karta hai. No params needed.</p>
+      </div>
+    </div>
+
+    <!-- Accept Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/accept</span>
+        <span class="summary">Step 1: Job accept karo</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">No body needed. Status: <code>assigned</code> rehta hai, timeline updated.</p>
+      </div>
+    </div>
+
+    <!-- Start Transit -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/start-transit</span>
+        <span class="summary">Step 2: Pickup pe niklo</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Status: <code>assigned</code> → <code>in_transit</code></p>
+      </div>
+    </div>
+
+    <!-- Arrived -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/arrived</span>
+        <span class="summary">Step 3: Location pe pohonch gaya</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Status change nahi hota — sirf timeline updated. Customer ko sign karne ke liye prepare karo.</p>
+      </div>
+    </div>
+
+    <!-- Start Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/start</span>
+        <span class="summary">Step 4: Job start + Timer start + Customer signature</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "startSignature": "data:image/png;base64,iVBOR...",  // required — customer ka start signature
+  "termsAccepted": true                                 // required — customer ne T&C accept kiya
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Side Effects</h4>
+          <p style="color:var(--muted);font-size:13px">✅ Status → <code>started</code><br/>✅ <code>timerStarted</code> = current timestamp<br/>✅ Signature save hoti hai</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/pause</span>
+        <span class="summary">Timer pause karo (break)</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Status → <code>paused</code>. Pause time record hota hai billing se exclude karne ke liye.</p>
+      </div>
+    </div>
+
+    <!-- Resume Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/resume</span>
+        <span class="summary">Timer resume karo</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Status → <code>started</code>. Resume timestamp record hota hai.</p>
+      </div>
+    </div>
+
+    <!-- Complete Job -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/complete</span>
+        <span class="summary">Step 5: Job complete + Timer stop + End signature</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "endSignature": "data:image/png;base64,iVBOR...",  // required — customer ka end signature
+  "completionNotes": "All items delivered safely",    // optional
+  "damageReport": "Minor scratch on table",           // optional
+  "extraCharges": 50,                                 // optional — extra charges add karna
+  "extraChargeNotes": "Stairs surcharge",
+  "fuelCharges": 20,
+  "tollCharges": 15,
+  "discount": 10
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "message": "Job completed.",
+  "data": {
+    "job": {
+      "status": "completed",
+      "timerEnded": "2026-04-22T13:00:00Z",
+      "totalWorkedMinutes": 234,
+      "billableHours": 3.9,
+      "billing": {
+        "laborCost": 468,
+        "extraCharges": 50,
+        "fuelCharges": 20,
+        "tollCharges": 15,
+        "discount": 10,
+        "gst": 54.3,
+        "totalAmount": 597.3
+      }
+    }
+  }
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Auto Calculated</h4>
+          <p style="color:var(--muted);font-size:13px">
+            ✅ Timer stops — pause intervals exclude kiye jaate hain<br/>
+            ✅ <code>billableHours</code> = (total minutes - paused minutes) / 60<br/>
+            ✅ <code>laborCost</code> = billableHours × hourlyRate (ya fixedQuote)<br/>
+            ✅ GST = 10% of subtotal<br/>
+            ✅ Driver availability → <code>available</code>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Photos -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/jobs/:id/photos</span>
+        <span class="summary">Job photos upload (before/after)</span>
+        <span class="badge badge-driver">Driver</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request (multipart/form-data)</h4>
+          <pre>Content-Type: multipart/form-data
+
+photos: [file1.jpg, file2.jpg]   // max 10 files, max 10MB each
+                                  // formats: jpg, png, gif, webp</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS -->
+  <div class="section" id="customers">
+    <div class="section-title">Customers</div>
+    <div class="section-desc">Customer database manage karo</div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/customers</span>
+        <span class="summary">Sabhi customers (paginated + search)</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Example</th></tr>
+            <tr><td><code>search</code></td><td>John</td></tr>
+            <tr><td><code>page</code></td><td>1</td></tr>
+            <tr><td><code>limit</code></td><td>20</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/customers/:id</span>
+        <span class="summary">Single customer detail</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Customer ka full profile — totalJobs, totalSpent including.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/customers</span>
+        <span class="summary">Naya customer create</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "name": "Sarah Jones",           // required
+  "phone": "0423456789",           // required
+  "email": "sarah@email.com",      // optional
+  "address": "10 George St, Sydney",
+  "company": "Jones Removals",
+  "notes": "VIP customer",
+  "source": "referral"             // direct | referral | website | phone | other
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/customers/:id</span>
+        <span class="summary">Customer update</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Any fields se update kar sakte ho.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method DELETE">DELETE</span>
+        <span class="path">/customers/:id</span>
+        <span class="summary">Customer deactivate (soft delete)</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Hard delete nahi — sirf <code>isActive: false</code> hota hai.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- VEHICLES -->
+  <div class="section" id="vehicles">
+    <div class="section-title">Vehicles</div>
+    <div class="section-desc">Fleet management</div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/vehicles</span>
+        <span class="summary">Sabhi vehicles list</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Example</th></tr>
+            <tr><td><code>available</code></td><td>true</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/vehicles</span>
+        <span class="summary">Naya vehicle add</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "name": "Van 1",                          // required
+  "type": "van",                            // van | truck | ute | trailer | other
+  "registration": "ABC123",                 // required, unique
+  "capacity": "3 tonnes"
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/vehicles/:id</span>
+        <span class="summary">Vehicle update</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body"><p style="color:var(--muted);font-size:13px">Any fields update kar sakte ho.</p></div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method DELETE">DELETE</span>
+        <span class="path">/vehicles/:id</span>
+        <span class="summary">Vehicle deactivate</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body"><p style="color:var(--muted);font-size:13px">Soft delete — <code>isActive: false</code></p></div>
+    </div>
+  </div>
+
+  <!-- INVOICES -->
+  <div class="section" id="invoices">
+    <div class="section-title">Invoices</div>
+    <div class="section-desc">Billing & PDF generation</div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/invoices</span>
+        <span class="summary">Sabhi invoices list</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Values</th></tr>
+            <tr><td><code>status</code></td><td>draft | sent | paid | overdue | cancelled</td></tr>
+            <tr><td><code>page</code></td><td>1</td></tr>
+            <tr><td><code>limit</code></td><td>20</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/invoices/:id</span>
+        <span class="summary">Single invoice detail</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Response Data Includes</h4>
+          <pre>{
+  "invoiceNumber": "INV-00001",
+  "customerName": "John Smith",
+  "items": [
+    { "description": "Labor - 3.9 hours @ $120/hr", "quantity": 3.9, "unitPrice": 120, "total": 468 },
+    { "description": "Stairs surcharge", "quantity": 1, "unitPrice": 50, "total": 50 }
+  ],
+  "subtotal": 518,
+  "gst": 51.8,
+  "discount": 0,
+  "totalAmount": 569.8,
+  "status": "draft",
+  "dueDate": "2026-05-22T..."
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/invoices/:id/download</span>
+        <span class="summary">📄 PDF Invoice download</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Response</h4>
+          <p style="color:var(--muted);font-size:13px">Returns <code>application/pdf</code> binary file directly.<br/>Browser mein automatically download hoga.</p>
+          <pre>Content-Type: application/pdf
+Content-Disposition: attachment; filename="Invoice-INV-00001.pdf"</pre>
+        </div>
+        <div class="body-section">
+          <h4>React Native Usage</h4>
+          <pre>// expo-file-system + expo-sharing use karo
+const response = await fetch(`${BASE_URL}/invoices/${id}/download`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const blob = await response.blob();
+// Save using FileSystem.writeAsStringAsync or share</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/invoices/generate/:jobId</span>
+        <span class="summary">Job se auto invoice generate karo</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Job <code>completed</code> status mein honi chahiye. Ek baar hi generate hoti hai — dobara call karo to existing invoice milega.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/invoices/:id/status</span>
+        <span class="summary">Invoice status update</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{ "status": "paid" }   // draft | sent | paid | overdue | cancelled</pre>
+        </div>
+        <p style="color:var(--muted);font-size:13px">Status <code>paid</code> set karne pe <code>paidDate</code> auto-set hoti hai.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="section" id="users">
+    <div class="section-title">Users</div>
+    <div class="section-desc">User & Driver management</div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/users</span>
+        <span class="summary">Sabhi users list</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Values</th></tr>
+            <tr><td><code>role</code></td><td>admin | driver | customer</td></tr>
+            <tr><td><code>search</code></td><td>name ya email</td></tr>
+            <tr><td><code>page</code></td><td>1</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/users/drivers</span>
+        <span class="summary">Saare drivers (availability ke sath)</span>
+        <span class="badge badge-any">Any Role</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Values</th></tr>
+            <tr><td><code>availability</code></td><td>available | busy | offline</td></tr>
+          </table>
+        </div>
+        <div class="body-section">
+          <h4>Response</h4>
+          <pre>{
+  "data": {
+    "drivers": [
+      {
+        "_id": "...", "name": "Ali", "phone": "0411...",
+        "driverProfile": { "availability": "available", "rating": 4.5, "completedJobs": 23 }
+      }
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/users/:id</span>
+        <span class="summary">User profile update</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <pre>{ "name": "New Name", "phone": "0412...", "isActive": true }</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/users/drivers/:id</span>
+        <span class="summary">Driver profile update</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <pre>{
+  "licenseNumber": "DL123456",
+  "vehicleTypes": ["van", "truck"],
+  "availability": "available"    // available | busy | offline
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="section" id="dashboard">
+    <div class="section-title">Dashboard</div>
+    <div class="section-desc">Admin analytics & reports</div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/dashboard/stats</span>
+        <span class="summary">Overall business stats</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "data": {
+    "totalJobs": 150,
+    "pending": 12,
+    "assigned": 8,
+    "in_transit": 3,
+    "started": 5,
+    "completed": 118,
+    "cancelled": 4,
+    "totalRevenue": 45600,       // sirf paid invoices ka
+    "activeDrivers": 6
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/dashboard/daily-jobs</span>
+        <span class="summary">Daily completed jobs chart data</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Default</th></tr>
+            <tr><td><code>days</code></td><td>30</td></tr>
+          </table>
+        </div>
+        <div class="body-section">
+          <h4>Response</h4>
+          <pre>{
+  "data": {
+    "chart": [
+      { "date": "2026-04-21", "count": 7 },
+      { "date": "2026-04-22", "count": 4 }
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/dashboard/driver-performance</span>
+        <span class="summary">Top 10 drivers performance</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Response</h4>
+          <pre>{
+  "data": {
+    "drivers": [
+      { "name": "Ali Khan", "completedJobs": 45, "rating": 4.8 },
+      { "name": "John Driver", "completedJobs": 38, "rating": 4.5 }
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CRM -->
+  <div class="section" id="crm">
+    <div class="section-title">CRM</div>
+    <div class="section-desc">Leads & Follow-ups management</div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/crm/leads</span>
+        <span class="summary">Sabhi leads list</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Values</th></tr>
+            <tr><td><code>status</code></td><td>new | contacted | qualified | proposal | won | lost</td></tr>
+            <tr><td><code>search</code></td><td>name ya company</td></tr>
+            <tr><td><code>page</code></td><td>1</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/crm/leads</span>
+        <span class="summary">Naya lead create</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "name": "Bob Williams",
+  "phone": "0433000111",
+  "email": "bob@business.com",
+  "company": "Bob's Removals",
+  "source": "website",              // website | referral | phone | social | other
+  "status": "new",
+  "estimatedValue": 2000,
+  "notes": "Interested in monthly contract",
+  "assignedTo": "64adminUserId..."  // optional
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/crm/leads/:id</span>
+        <span class="summary">Lead update (status move karo)</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <pre>{ "status": "qualified", "estimatedValue": 3000 }</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method DELETE">DELETE</span>
+        <span class="path">/crm/leads/:id</span>
+        <span class="summary">Lead delete</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <p style="color:var(--muted);font-size:13px">Hard delete — permanent.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="path">/crm/follow-ups</span>
+        <span class="summary">Follow-ups list</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Query Params</h4>
+          <table class="params-table">
+            <tr><th>Param</th><th>Values</th></tr>
+            <tr><td><code>relatedTo</code></td><td>lead | customer | job</td></tr>
+            <tr><td><code>relatedId</code></td><td>MongoDB ObjectId</td></tr>
+            <tr><td><code>status</code></td><td>pending | completed | overdue</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/crm/follow-ups</span>
+        <span class="summary">Naya follow-up task create</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "relatedTo": "lead",             // lead | customer | job
+  "relatedId": "64leadId...",
+  "type": "call",                  // call | email | meeting | note | task
+  "subject": "Follow up on quote",
+  "description": "Call Bob re: moving quote",
+  "dueDate": "2026-04-25T10:00:00Z",
+  "assignedTo": "64adminUserId..."
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method PUT">PUT</span>
+        <span class="path">/crm/follow-ups/:id</span>
+        <span class="summary">Follow-up update / complete karo</span>
+        <span class="badge badge-admin">Admin</span>
+      </div>
+      <div class="endpoint-body">
+        <pre>{ "status": "completed", "description": "Called — interested, sending quote" }</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Responses -->
+  <div class="section">
+    <div class="section-title">Error Responses</div>
+    <div class="section-desc">Standard error format</div>
+    <pre>{
+  "success": false,
+  "message": "Error description",
+  "errors": []    // validation errors hone pe
+}
+
+// HTTP Status Codes:
+// 400 — Bad Request (validation fail)
+// 401 — Unauthorized (token missing/invalid)
+// 403 — Forbidden (role access denied)
+// 404 — Not Found
+// 409 — Conflict (duplicate entry)
+// 429 — Too Many Requests (rate limit)
+// 500 — Internal Server Error</pre>
+  </div>
+
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// Active nav link on scroll
+const sections = document.querySelectorAll('.section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(l => {
+    l.classList.remove('active');
+    if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+  });
+}, { passive: true });
+
+// Smooth scroll
+navLinks.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
