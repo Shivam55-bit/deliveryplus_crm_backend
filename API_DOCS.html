@@ -205,14 +205,14 @@
   <!-- AUTH -->
   <div class="section" id="auth">
     <div class="section-title">Authentication</div>
-    <div class="section-desc">Login, register, token refresh</div>
+    <div class="section-desc">Login, register, token refresh — Generic + Role-specific endpoints</div>
 
     <!-- Register -->
     <div class="endpoint">
       <div class="endpoint-header" onclick="toggle(this)">
         <span class="method POST">POST</span>
         <span class="path">/auth/register</span>
-        <span class="summary">New user register</span>
+        <span class="summary">New user register (role from body)</span>
         <span class="badge badge-any">Public</span>
       </div>
       <div class="endpoint-body">
@@ -240,12 +240,76 @@
       </div>
     </div>
 
+    <!-- Register Admin -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/register/admin</span>
+        <span class="summary">Admin user register</span>
+        <span class="badge badge-any">Public</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "name": "Admin User",
+  "email": "admin@hubcrm.com",
+  "password": "admin123",
+  "phone": "0400000000"     // optional
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 201</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "Admin User", "email": "...", "role": "admin" },
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register Driver -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/register/driver</span>
+        <span class="summary">Driver user register</span>
+        <span class="badge badge-any">Public</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "name": "Driver Name",
+  "email": "driver@hubcrm.com",
+  "password": "driver123",
+  "phone": "0400000000"     // optional
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 201</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "Driver Name", "email": "...", "role": "driver" },
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
     <!-- Login -->
     <div class="endpoint">
       <div class="endpoint-header" onclick="toggle(this)">
         <span class="method POST">POST</span>
         <span class="path">/auth/login</span>
-        <span class="summary">Login karo</span>
+        <span class="summary">Login karo (any role)</span>
         <span class="badge badge-any">Public</span>
       </div>
       <div class="endpoint-body">
@@ -265,6 +329,80 @@
     "accessToken": "eyJhbGci...",
     "refreshToken": "eyJhbGci..."
   }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Admin -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/login/admin</span>
+        <span class="summary">Admin login only</span>
+        <span class="badge badge-admin">Admin Only</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "email": "admin@hubcrm.com",
+  "password": "admin123"
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "Admin", "role": "admin" },
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Error 401 (if not admin)</h4>
+          <pre>{
+  "success": false,
+  "message": "Invalid credentials."
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Driver -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="path">/auth/login/driver</span>
+        <span class="summary">Driver login only</span>
+        <span class="badge badge-driver">Driver Only</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section">
+          <h4>Request Body</h4>
+          <pre>{
+  "email": "driver@hubcrm.com",
+  "password": "driver123"
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Response 200</h4>
+          <pre>{
+  "success": true,
+  "data": {
+    "user": { "_id": "...", "name": "Driver", "role": "driver" },
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}</pre>
+        </div>
+        <div class="body-section">
+          <h4>Error 401 (if not driver)</h4>
+          <pre>{
+  "success": false,
+  "message": "Invalid credentials."
 }</pre>
         </div>
       </div>
