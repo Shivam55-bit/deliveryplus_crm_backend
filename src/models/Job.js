@@ -84,7 +84,6 @@ const jobSchema = new mongoose.Schema({
 jobSchema.index({ status: 1, scheduledDate: 1 });
 jobSchema.index({ customerId: 1 });
 jobSchema.index({ assignedDrivers: 1 });
-jobSchema.index({ jobNumber: 1 });
 jobSchema.index({ customerName: 'text', customerPhone: 'text' });
 
 // Auto-generate job number

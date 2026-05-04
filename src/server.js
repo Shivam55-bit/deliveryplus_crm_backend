@@ -18,8 +18,11 @@ import customerRoutes from './routes/customers.js';
 import jobRoutes from './routes/jobs.js';
 import invoiceRoutes from './routes/invoices.js';
 import vehicleRoutes from './routes/vehicles.js';
+import driverRoutes from './routes/drivers.js';
 import dashboardRoutes from './routes/dashboard.js';
 import crmRoutes from './routes/crm.js';
+import { authenticate, authorize } from './middleware/auth.js';
+import { createDriver } from './controllers/userController.js';
 
 const app = express();
 
@@ -57,10 +60,12 @@ app.use('/api', globalLimiter);
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', userRoutes);
+app.post('/api/users/drivers', authenticate, authorize('admin'), createDriver);
 app.use('/api/customers', customerRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/drivers', driverRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/crm', crmRoutes);
 

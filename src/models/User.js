@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
   refreshToken: { type: String },
 }, { timestamps: true });
 
-userSchema.index({ email: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 
 userSchema.pre('save', async function (next) {

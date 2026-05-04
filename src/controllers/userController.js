@@ -51,6 +51,42 @@ export const getDrivers = async (req, res, next) => {
   }
 };
 
+export const createDriver = async (req, res, next) => {
+  try {
+    const { name, email, password, confirm, phone, licenseNumber, vehicleNumber, vehicleTypes, availability } = req.body;
+
+    if (!name || !email || !password) {
+      return sendError(res, 400, 'Name, email and password are required.');
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return sendError(res, 400, 'Email already registered.');
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: 'driver',
+      phone,
+    });
+
+    const driver = await Driver.create({
+      userId: user._id,
+      licenseNumber,
+      vehicleNumber,
+      vehicleTypes,
+      availability,
+    });
+
+    const populatedDriver = await driver.populate('userId', 'name email phone avatar');
+    sendResponse(res, 201, { driver: populatedDriver, confirm }, 'Driver created.');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
