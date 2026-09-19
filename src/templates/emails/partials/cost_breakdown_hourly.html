@@ -1,0 +1,155 @@
+<tr>
+  <td class="section-space" style="padding:0 40px 28px;">
+    <div style="margin-bottom:14px;">
+      <div class="section-title" style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Cost Breakdown</div>
+      <div class="section-kicker" style="margin-top:3px;font-size:12px;line-height:16px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.8px;">Pricing Summary</div>
+    </div>
+
+    <!-- Pricing Summary Table Container -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="pricing-table"
+      style="width:100%;background:#F1F6FA;border:1.5px solid #BAC9D6;border-radius:14px;overflow:hidden;">
+      <tr>
+        <td style="padding:10px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="width:100%;background:#FFFFFF;border:1px solid #BAC9D6;border-radius:10px;overflow:hidden;">
+            <tr>
+              <td class="pricing-label" style="padding:14px 20px;border-bottom:1.5px solid #BAC9D6;color:#334155;font-size:14px;font-weight:700;">Rate</td>
+              <td class="pricing-value" style="padding:14px 20px;border-bottom:1.5px solid #BAC9D6;color:#101D4F;font-size:16px;font-weight:900;text-align:right;">
+                <span style="display:inline-block;padding:4px 12px;background:#E0F2FE;border:1px solid #BAE6FD;border-radius:6px;color:#0369A1;">{{HOURLY_RATE_LABEL}}</span>
+              </td>
+            </tr>
+            <tr style="background:#FAFDFE;">
+              <td class="pricing-label" style="padding:14px 20px;border-bottom:1.5px solid #BAC9D6;color:#334155;font-size:14px;font-weight:700;">Minimum Charge</td>
+              <td class="pricing-value" style="padding:14px 20px;border-bottom:1.5px solid #BAC9D6;color:#101D4F;font-size:15px;font-weight:800;text-align:right;">
+                <strong>{{MINIMUM_LABOR_COST}}</strong> ({{MINIMUM_CHARGE_HOURS_LABEL}})
+                <div style="font-size:11.5px;color:#64748B;font-weight:600;margin-top:3px;">Additional time charged in 30-min increments</div>
+              </td>
+            </tr>
+            {{CALLOUT_ROW}}
+            {{TRAVEL_BACK_ROW}}
+            {{STAIRS_ROW}}
+            {{GST_ROW}}
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Minimum Estimated Cost Card -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="total-card"
+      style="width:100%;margin-top:20px;background:linear-gradient(135deg,#0D1B4C 0%,#1B3574 100%);border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(13,27,76,.2);">
+      <tr>
+        <td class="total-card-cell" style="padding:24px 28px;">
+          <div class="total-label" style="font-size:12px;font-weight:800;color:#00B9E8;text-transform:uppercase;letter-spacing:1px;">Minimum Estimated Cost</div>
+          <div class="total-description" style="font-size:13px;color:#BFD6EE;margin-top:4px;">{{MINIMUM_ESTIMATED_COST_DESCRIPTION}}</div>
+          <div class="total-amount" style="font-size:38px;font-weight:900;color:#ffffff;line-height:44px;margin-top:8px;">{{MINIMUM_ESTIMATED_COST}}</div>
+          <div class="total-footnote" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.15);font-size:12px;color:#8FA9CC;">
+            Final cost calculated based on total job time taken.
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Deposit Required Notice -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="width:100%;margin-top:16px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;overflow:hidden;">
+      <tr>
+        <td class="deposit-copy-cell" style="padding:16px 20px;vertical-align:middle;">
+          <div style="font-size:13.5px;font-weight:800;color:#166534;">Booking Deposit Required to Lock In Time Slot</div>
+          <div style="font-size:12px;color:#15803D;margin-top:2px;">To confirm your booking, the deposit below is required. Deducted from your final bill.</div>
+        </td>
+        <td class="deposit-amount-cell" align="right" style="padding:16px 20px;text-align:right;vertical-align:middle;">
+          <div style="font-size:24px;font-weight:900;color:#166534;">{{DEPOSIT_AMOUNT}}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Rough Estimate Scenarios Section -->
+    <div style="margin-top:28px;margin-bottom:12px;">
+      <div style="font-size:18px;line-height:24px;font-weight:800;color:#101D4F;">Rough Estimate Scenarios</div>
+      <div style="margin-top:4px;font-size:13px;line-height:18px;color:#59677A;">
+        Below is a rough estimate for your job
+        <span style="display:inline-block;padding:2px 8px;background:#E8F8FC;border:1px solid #CFE8EF;border-radius:6px;color:#101D4F;font-size:11px;font-weight:800;letter-spacing:.5px;margin-left:4px;">
+          {{JOB_NUMBER}}
+        </span>
+      </div>
+    </div>
+
+    <!-- Scenarios Table (Fixed Layout, High Visibility Borders) -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="width:100%;max-width:100%;table-layout:fixed;background:#F1F6FA;border:1.5px solid #BAC9D6;border-radius:14px;overflow:hidden;">
+      <tr>
+        <td style="padding:10px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="width:100%;max-width:100%;table-layout:fixed;background:#ffffff;border:1px solid #BAC9D6;border-radius:10px;overflow:hidden;">
+            <thead>
+              <tr style="background:#0D1B4C;">
+                <th align="left" style="width:38%;padding:12px 14px;color:#ffffff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #0D1B4C;">
+                  Job Hour Scenario
+                </th>
+                <th align="left" style="width:30%;padding:12px 12px;color:#ffffff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #0D1B4C;">
+                  Hourly Cost
+                </th>
+                <th align="center" style="width:16%;padding:12px 8px;color:#ffffff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;text-align:center;border-bottom:2px solid #0D1B4C;">
+                  Call Out
+                </th>
+                <th align="right" style="width:16%;padding:12px 14px;color:#ffffff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;text-align:right;border-bottom:2px solid #0D1B4C;">
+                  Total
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#FFFFFF;">
+                <td style="padding:12px 14px;border-bottom:1.5px solid #BAC9D6;color:#172033;font-size:12.5px;font-weight:700;word-wrap:break-word;">
+                  If your job takes 2.5 hours
+                </td>
+                <td style="padding:12px 12px;border-bottom:1.5px solid #BAC9D6;color:#475569;font-size:12.5px;font-weight:600;word-wrap:break-word;">
+                  {{SCENARIO_1_HOURLY}}
+                </td>
+                <td align="center" style="padding:12px 8px;border-bottom:1.5px solid #BAC9D6;color:#475569;font-size:12.5px;font-weight:600;text-align:center;">
+                  {{SCENARIO_CALLOUT}}
+                </td>
+                <td align="right" style="padding:12px 14px;border-bottom:1.5px solid #BAC9D6;color:#0F766E;font-size:14.5px;font-weight:900;text-align:right;white-space:nowrap;">
+                  <span style="display:inline-block;padding:2px 8px;background:#E6FFFA;border:1px solid #99F6E4;border-radius:6px;">{{SCENARIO_1_TOTAL}}</span>
+                </td>
+              </tr>
+              <tr style="background:#FAFDFE;">
+                <td style="padding:12px 14px;border-bottom:1.5px solid #BAC9D6;color:#172033;font-size:12.5px;font-weight:700;word-wrap:break-word;">
+                  If your job takes 3 hours
+                </td>
+                <td style="padding:12px 12px;border-bottom:1.5px solid #BAC9D6;color:#475569;font-size:12.5px;font-weight:600;word-wrap:break-word;">
+                  {{SCENARIO_2_HOURLY}}
+                </td>
+                <td align="center" style="padding:12px 8px;border-bottom:1.5px solid #BAC9D6;color:#475569;font-size:12.5px;font-weight:600;text-align:center;">
+                  {{SCENARIO_CALLOUT}}
+                </td>
+                <td align="right" style="padding:12px 14px;border-bottom:1.5px solid #BAC9D6;color:#0F766E;font-size:14.5px;font-weight:900;text-align:right;white-space:nowrap;">
+                  <span style="display:inline-block;padding:2px 8px;background:#E6FFFA;border:1px solid #99F6E4;border-radius:6px;">{{SCENARIO_2_TOTAL}}</span>
+                </td>
+              </tr>
+              <tr style="background:#FFFFFF;">
+                <td style="padding:12px 14px;color:#172033;font-size:12.5px;font-weight:700;word-wrap:break-word;">
+                  If your job takes 4 hours
+                </td>
+                <td style="padding:12px 12px;color:#475569;font-size:12.5px;font-weight:600;word-wrap:break-word;">
+                  {{SCENARIO_3_HOURLY}}
+                </td>
+                <td align="center" style="padding:12px 8px;color:#475569;font-size:12.5px;font-weight:600;text-align:center;">
+                  {{SCENARIO_CALLOUT}}
+                </td>
+                <td align="right" style="padding:12px 14px;color:#0F766E;font-size:14.5px;font-weight:900;text-align:right;white-space:nowrap;">
+                  <span style="display:inline-block;padding:2px 8px;background:#E6FFFA;border:1px solid #99F6E4;border-radius:6px;">{{SCENARIO_3_TOTAL}}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Scenarios Note Footer -->
+    <div style="margin-top:10px;padding:10px 14px;background:#E8F8FC;border:1px solid #D5EFF7;border-radius:8px;color:#0C5068;font-size:12px;line-height:17px;font-weight:500;">
+      ℹ Additional time after the estimate is charged in 30-minute increments at the applicable hourly rate.
+    </div>
+
+  </td>
+</tr>

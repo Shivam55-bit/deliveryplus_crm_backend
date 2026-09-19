@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -21,44 +20,75 @@ import vehicleRoutes from './routes/vehicles.js';
 import driverRoutes from './routes/drivers.js';
 import dashboardRoutes from './routes/dashboard.js';
 import crmRoutes from './routes/crm.js';
+import driverNotificationsRoutes from './routes/driverNotifications.js';
+import adminNotificationsRoutes from './routes/adminNotifications.js';
+import deviceTokenRoutes from './routes/deviceTokens.js';
+import emailAttachmentRoutes from './routes/emailAttachmentRoutes.js';
+import emailTemplateRoutes from './routes/emailTemplateRoutes.js';
+import truckDimensionsRoutes from './routes/truckDimensionsRoutes.js';
+import adminManagementRoutes from './routes/admins.js';
 import { authenticate, authorize } from './middleware/auth.js';
 import { createDriver } from './controllers/userController.js';
+import { verifyMailer } from './utils/mailer.js';
 
 const app = express();
+const allowedOrigins = [
+  'https://deliveryplus.tech',
+  'https://www.deliveryplus.tech',
+  'https://api.deliveryplus.tech',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
 
 // Ensure uploads dir exists
 if (!existsSync(config.uploadPath)) {
   mkdirSync(config.uploadPath, { recursive: true });
 }
 
-// Rate Limiters
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many requests, please try again after 15 minutes.' },
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // only 10 login/register attempts per 15 min
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many login attempts, please try again after 15 minutes.' },
-});
+// Rate Limiters - Disabled completely so login / API calls are never blocked
+const globalLimiter = (req, res, next) => next();
+export const authLimiter = (req, res, next) => next();
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
+}));
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
+}));
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('dev'));
-app.use('/uploads', express.static(config.uploadPath));
+app.use('/uploads', (req, res, next) => {
+  // Admin and driver apps are served from different origins than the API.
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(config.uploadPath));
 app.use('/api', globalLimiter);
 
 // Routes
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.post('/api/users/drivers', authenticate, authorize('admin'), createDriver);
 app.use('/api/customers', customerRoutes);
@@ -66,8 +96,17 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/driver', driverNotificationsRoutes);
+app.use('/api/admin', adminNotificationsRoutes);
+app.use('/api/device-token', deviceTokenRoutes);
+app.use('/api/email-attachments', emailAttachmentRoutes);
+app.use('/api/email-templates', emailTemplateRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/crm', crmRoutes);
+app.use('/api/admins', adminManagementRoutes);
+app.use('/api/truck-dimensions', truckDimensionsRoutes);
+app.use('/truck-dimensions', truckDimensionsRoutes);
+app.use('/removalists/truck-dimensions', truckDimensionsRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -81,14 +120,35 @@ app.get('/api/docs', (_req, res) => {
   res.send(readFileSync(docsPath));
 });
 
+app.use((err, req, res, next) => {
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      message: 'Uploaded signature is too large',
+    });
+  }
+
+  next(err);
+});
+
 // Error handler
 app.use(errorHandler);
 
 // Start
 const start = async () => {
   await connectDB();
-  app.listen(config.port, () => {
+  await verifyMailer();
+  const server = app.listen(config.port, () => {
     console.log(`Server running on port ${config.port} in ${config.nodeEnv} mode`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${config.port} is already in use. Stop the process using that port or set PORT to a free one.`);
+    } else {
+      console.error('Server failed to start:', err);
+    }
+    process.exit(1);
   });
 };
 

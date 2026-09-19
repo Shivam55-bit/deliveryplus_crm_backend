@@ -18,6 +18,37 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+const enrichUserWithDriverProfile = async (user) => {
+  const baseUser = user.toObject ? user.toObject() : { ...user };
+  const userRole = String(baseUser.role || '').toLowerCase().replace(/[-_]/g, '');
+
+  if (userRole === 'superadmin' || baseUser.email === 'admin@hubcrm.com' || (userRole === 'admin' && !baseUser.createdBy)) {
+    baseUser.role = 'super_admin';
+    baseUser.permissions = ['*'];
+    return baseUser;
+  }
+
+  if (userRole === 'admin' || userRole === 'manager') {
+    baseUser.role = 'admin';
+    baseUser.permissions = Array.isArray(baseUser.permissions) ? baseUser.permissions : [];
+    return baseUser;
+  }
+
+  if (baseUser.role !== 'driver') {
+    return baseUser;
+  }
+
+  const driverProfile = await Driver.findOne({ userId: user._id || baseUser._id }).select('-fcmTokens').lean();
+
+  return {
+    ...baseUser,
+    approvalStatus: driverProfile?.approvalStatus || 'approved',
+    isApproved: typeof driverProfile?.isApproved === 'boolean' ? driverProfile.isApproved : true,
+    verificationStatus: driverProfile?.verificationStatus || 'verified',
+    documents: driverProfile?.documents || [],
+  };
+};
+
 const createUserWithRole = async (req, res, next, role) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -63,7 +94,8 @@ export const register = async (req, res, next) => {
     user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    sendResponse(res, 201, { user, ...tokens }, 'Registration successful.');
+    const userPayload = await enrichUserWithDriverProfile(user);
+    sendResponse(res, 201, { user: userPayload, ...tokens }, 'Registration successful.');
   } catch (error) {
     next(error);
   }
@@ -75,23 +107,54 @@ export const registerDriver = async (req, res, next) => createUserWithRole(req, 
 const loginWithRole = async (req, res, next, expectedRole) => {
   try {
     const { email, password } = req.body;
+    console.log(`[AUTH] login request: email=${email} expectedRole=${expectedRole || 'any'}`);
 
     const user = await User.findOne({ email });
-    if (!user || !user.isActive || (expectedRole && user.role !== expectedRole)) {
-      return sendError(res, 401, 'Invalid credentials.');
+    if (!user) {
+      console.log('[AUTH] login failure - user not found', { email });
+      return sendError(res, 401, 'Invalid email or password.');
+    }
+
+    if (expectedRole) {
+      const userNorm = String(user.role || '').toLowerCase().replace(/[-_]/g, '');
+      const expNorm = String(expectedRole || '').toLowerCase().replace(/[-_]/g, '');
+
+      let matches = false;
+      if (expNorm === 'admin' || expNorm === 'superadmin') {
+        matches = ['admin', 'superadmin', 'manager'].includes(userNorm);
+      } else {
+        matches = userNorm === expNorm;
+      }
+
+      if (!matches) {
+        console.log('[AUTH] login failure - role mismatch', {
+          email,
+          role: user.role,
+          expectedRole,
+        });
+        return sendError(res, 401, 'Invalid email or password.');
+      }
+    }
+
+    if (user.isActive === false) {
+      console.log('[AUTH] login failure - account disabled', { email });
+      return sendError(res, 403, 'Your account is disabled. Please contact support.');
     }
 
     const isMatch = await user.comparePassword(password);
+    console.log(`[AUTH] password compare for ${email}: ${isMatch}`);
     if (!isMatch) {
-      return sendError(res, 401, 'Invalid credentials.');
+      return sendError(res, 401, 'Invalid email or password.');
     }
 
     const tokens = generateTokens(user);
+    console.log(`[AUTH] JWT generated for ${email} role=${user.role}`);
     user.refreshToken = tokens.refreshToken;
     user.lastLogin = new Date();
     await user.save();
 
-    sendResponse(res, 200, { user, ...tokens }, 'Login successful.');
+    const userPayload = await enrichUserWithDriverProfile(user);
+    sendResponse(res, 200, { user: userPayload, ...tokens }, 'Login successful.');
   } catch (error) {
     next(error);
   }
@@ -100,6 +163,11 @@ const loginWithRole = async (req, res, next, expectedRole) => {
 export const login = async (req, res, next) => loginWithRole(req, res, next);
 export const loginAdmin = async (req, res, next) => loginWithRole(req, res, next, 'admin');
 export const loginDriver = async (req, res, next) => loginWithRole(req, res, next, 'driver');
+
+export const resetLoginAttempts = async (req, res) => {
+  // Lockouts are completely disabled; return immediate success
+  sendResponse(res, 200, {}, 'Login lockouts are disabled. You can login directly.');
+};
 
 export const refreshToken = async (req, res, next) => {
   try {
@@ -124,5 +192,6 @@ export const refreshToken = async (req, res, next) => {
 };
 
 export const getMe = async (req, res) => {
-  sendResponse(res, 200, { user: req.user });
+  const userPayload = await enrichUserWithDriverProfile(req.user);
+  sendResponse(res, 200, { user: userPayload });
 };

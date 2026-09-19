@@ -9,8 +9,9 @@ const errorHandler = (err, req, res, _next) => {
   }
 
   if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0];
-    return sendError(res, 400, `Duplicate value for ${field}.`);
+    const field = Object.keys(err.keyValue)[0] || 'unknown';
+    const message = `Duplicate value for ${field}.`;
+    return sendError(res, 400, message, { [field]: [message] });
   }
 
   if (err.name === 'CastError') {

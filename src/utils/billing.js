@@ -1,29 +1,51 @@
-export const calculateBilling = (job) => {
-  let laborCost = 0;
+import { buildPricingSnapshot, calculateMinimumEstimatedCost } from '../services/pricingService.js';
 
+const toCurrency = (value) => Math.round((Number(value || 0) * 100)) / 100;
+
+export const calculateBilling = (job) => {
   if (job.pricingType === 'fixed') {
-    laborCost = job.fixedQuote || 0;
-  } else {
-    laborCost = (job.billableHours || 0) * (job.hourlyRate || 0);
+    const fixedQuote = Number(job.fixedQuote || 0);
+    const discount = Number(job.billing?.discount || 0);
+    const subtotal = fixedQuote - discount;
+    const gst = subtotal * 0.1;
+    const totalAmount = subtotal + gst;
+
+    return {
+      laborCost: toCurrency(fixedQuote),
+      extraCharges: 0,
+      fuelCharges: Number(job.billing?.fuelCharges || 0),
+      tollCharges: Number(job.billing?.tollCharges || 0),
+      gst: toCurrency(gst),
+      discount: toCurrency(discount),
+      totalAmount: toCurrency(totalAmount),
+    };
   }
 
-  const extraCharges = job.billing?.extraCharges || 0;
-  const fuelCharges = job.billing?.fuelCharges || 0;
-  const tollCharges = job.billing?.tollCharges || 0;
-  const discount = job.billing?.discount || 0;
+  const pricingSnapshot = buildPricingSnapshot({
+    ...job,
+    pricing: job.pricing ?? job.pricingSnapshot,
+    totalWorkedMinutes: job.totalWorkedMinutes || job.actualDurationMinutes || 0,
+  });
 
-  const subtotal = laborCost + extraCharges + fuelCharges + tollCharges - discount;
-  const gst = subtotal * 0.1; // 10% GST
+  const minimumEstimatedCost = Number(pricingSnapshot.minimumEstimatedCost || 0);
+  const extraTimeCharge = Number(pricingSnapshot.extraTimeCharge || 0);
+  const extraCharges = Number(job.billing?.extraCharges || 0) + extraTimeCharge;
+  const fuelCharges = Number(job.billing?.fuelCharges || 0);
+  const tollCharges = Number(job.billing?.tollCharges || 0);
+  const discount = Number(job.billing?.discount || 0);
+
+  const subtotal = minimumEstimatedCost + extraCharges + fuelCharges + tollCharges - discount;
+  const gst = subtotal * 0.1;
   const totalAmount = subtotal + gst;
 
   return {
-    laborCost: Math.round(laborCost * 100) / 100,
-    extraCharges,
-    fuelCharges,
-    tollCharges,
-    gst: Math.round(gst * 100) / 100,
-    discount,
-    totalAmount: Math.round(totalAmount * 100) / 100,
+    laborCost: toCurrency(minimumEstimatedCost),
+    extraCharges: toCurrency(extraCharges),
+    fuelCharges: toCurrency(fuelCharges),
+    tollCharges: toCurrency(tollCharges),
+    gst: toCurrency(gst),
+    discount: toCurrency(discount),
+    totalAmount: toCurrency(totalAmount),
   };
 };
 

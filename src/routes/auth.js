@@ -8,6 +8,7 @@ import {
   registerDriver,
   loginAdmin,
   loginDriver,
+  resetLoginAttempts,
 } from '../controllers/authController.js';
 import { loginValidator, registerValidator } from '../validators/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -21,6 +22,7 @@ router.post('/register/driver', registerValidator, validate, registerDriver);
 router.post('/login', loginValidator, validate, login);
 router.post('/login/admin', loginValidator, validate, loginAdmin);
 router.post('/login/driver', loginValidator, validate, loginDriver);
+router.post('/reset-login-attempts', resetLoginAttempts);
 router.post('/refresh-token', refreshToken);
 router.get('/me', authenticate, getMe);
 

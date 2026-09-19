@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>Delivery Plus Booking Confirmation - {{JOB_NUMBER}}</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        background: #EEF4F8 !important;
+        font-family: Arial, Helvetica, sans-serif;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table { border-collapse: separate; border-spacing: 0; }
+      img { display: block; max-width: 100%; height: auto; border: 0; }
+      a { text-decoration: none; }
+
+      .confirmation-document { width: 100% !important; max-width: 1100px !important; }
+      .outer-pad { padding: 32px 16px 56px !important; }
+      .section-title { font-size: 19px !important; line-height: 24px !important; font-weight: 800 !important; color: #101D4F !important; }
+      .section-kicker { margin-top: 2px !important; font-size: 11.5px !important; line-height: 15px !important; font-weight: 700 !important; color: #64748B !important; text-transform: uppercase !important; letter-spacing: .8px !important; }
+      .info-label { font-size: 11px !important; line-height: 15px !important; color: #64748B !important; text-transform: uppercase !important; letter-spacing: .6px !important; font-weight: 700 !important; }
+      .info-value { margin-top: 4px !important; font-size: 15px !important; line-height: 21px !important; color: #172033 !important; font-weight: 800 !important; overflow-wrap: anywhere; word-break: break-word; }
+
+      @media only screen and (max-width: 920px) {
+        .confirmation-document { width: 100% !important; max-width: 100% !important; }
+        .outer-pad { padding: 20px 12px 40px !important; }
+      }
+      @media only screen and (max-width: 600px) {
+        html, body, .page-table { background: #ffffff !important; }
+        .outer-pad { padding: 0 !important; }
+        .confirmation-document { width: 100% !important; max-width: 100% !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+        .header-pad { padding: 20px 18px 18px !important; }
+        .header-logo, .header-contact { display: block !important; width: 100% !important; max-width: 100% !important; text-align: left !important; }
+        .header-contact { padding-top: 14px !important; }
+        .intro-pad { padding: 24px 18px 20px !important; }
+        .section-space { padding-left: 18px !important; padding-right: 18px !important; }
+        .mobile-stack { display: block !important; width: 100% !important; max-width: 100% !important; border-right: 0 !important; border-bottom: 1px solid #E2E8F0 !important; box-sizing: border-box !important; }
+        .mobile-stack-last { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+        .mobile-grid-cell { display: block !important; width: 100% !important; max-width: 100% !important; border-right: 0 !important; border-bottom: 1px solid #DDE6EE !important; box-sizing: border-box !important; }
+        .mobile-grid-last { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+        .signoff-pad { padding: 0 18px 26px !important; }
+        .footer-pad { padding: 20px 18px !important; }
+        .footer-left, .footer-right { display: block !important; width: 100% !important; text-align: left !important; }
+        .footer-right { padding-top: 10px !important; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="page-table" style="width:100%;background:#EEF4F8;">
+      <tr>
+        <td align="center" class="outer-pad" style="padding:32px 16px 56px;">
+          <!--[if mso]>
+          <table role="presentation" width="1100" cellpadding="0" cellspacing="0" border="0"><tr><td>
+          <![endif]-->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="confirmation-document email-container" style="width:100%;max-width:1100px;background:#ffffff;border:1px solid #DDE6EE;border-radius:16px;overflow:hidden;box-shadow:0 16px 40px rgba(16,29,79,.12);">
+
+            <!-- 1. CORPORATE HEADER -->
+            <tr>
+              <td class="header-pad" style="padding:26px 36px 20px;background:#0D1B4C;border-bottom:3px solid #0F766E;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <!-- Logo / Brand -->
+                    <td width="55%" valign="middle" class="header-logo" style="padding:4px 0;vertical-align:middle;">
+                      {{LOGO_HTML}}
+                      <div class="header-tagline" style="margin-top:8px;color:#BFD6EE;font-size:13px;line-height:18px;font-weight:500;">
+                        Trusted Transit at Affordable Prices
+                      </div>
+                    </td>
+                    <!-- Contact Numbers -->
+                    <td width="45%" valign="middle" align="right" style="text-align:right;vertical-align:middle;padding:0;margin:0;" class="header-contact">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right" style="margin-left:auto;margin-right:0;text-align:right;">
+                        <tr>
+                          <td colspan="2" align="right" style="text-align:right;padding-bottom:8px;font-size:11px;color:#8FA9CC;text-transform:uppercase;letter-spacing:1px;font-weight:700;">CALL US</td>
+                        </tr>
+                        <tr>
+                          <td align="right" style="text-align:right;padding-right:8px;white-space:nowrap;width:24px;vertical-align:middle;">
+                            <span style="display:inline-block;font-size:16px;line-height:20px;color:#14B8A6;">☎</span>
+                          </td>
+                          <td align="right" style="text-align:right;white-space:nowrap;font-size:15px;line-height:20px;font-weight:700;color:#ffffff;vertical-align:middle;">
+                            <a href="tel:+61370085094" style="color:#ffffff;text-decoration:none;">03 7008 5094</a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="right" style="text-align:right;padding-top:8px;padding-right:8px;white-space:nowrap;width:24px;vertical-align:middle;">
+                            <span style="display:inline-block;font-size:16px;line-height:20px;color:#14B8A6;">📱</span>
+                          </td>
+                          <td align="right" style="text-align:right;padding-top:8px;white-space:nowrap;font-size:15px;line-height:20px;font-weight:700;color:#ffffff;vertical-align:middle;">
+                            <a href="tel:+61424796524" style="color:#ffffff;text-decoration:none;">04 2479 6524</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 2. BOOKING CONFIRMED HERO HEADER -->
+            <tr>
+              <td class="intro-pad" style="padding:32px 40px 22px;border-bottom:1px solid #EEF4F8;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td>
+                      <!-- Success Status Pill -->
+                      <div style="display:inline-block;padding:6px 14px;background:#E6FFFA;border:1px solid #99F6E4;border-radius:999px;color:#0F766E;font-size:12px;line-height:16px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;">
+                        ✓ Booking Confirmed
+                      </div>
+                      <!-- Main Heading -->
+                      <div style="margin-top:14px;font-size:26px;line-height:32px;font-weight:900;color:#101D4F;">
+                        Your move has been successfully scheduled.
+                      </div>
+                      <!-- Greeting & Subtext -->
+                      <div style="margin-top:10px;color:#59677A;font-size:15px;line-height:24px;">
+                        <strong style="color:#172033;">Hi {{CUSTOMER_NAME}},</strong> thank you for choosing Delivery Plus. Your relocation is officially confirmed and our team is scheduled to assist you.
+                      </div>
+                      <!-- Google Reviews link -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;">
+                        <tr>
+                          <td style="padding:8px 14px;background:#ffffff;border:1px solid #DDE6EE;border-radius:8px;color:#172033;font-size:12.5px;font-weight:700;">
+                            <a href="https://www.google.com/maps/place/Delivery+Plus/@-37.6845757,144.9599025,689m/data=!3m2!1e3!4b1!4m6!3m5!1s0x62794944bd5d04d7:0x3d4478c3c50c22d3!8m2!3d-37.6845757!4d144.9599025!16s%2Fg%2F11kc2jc6p0?entry=ttu&amp;g_ep=EgoyMDI2MDkwMS4wIKXMDSoASAFQAw%3D%3D" style="color:#172033;text-decoration:none;">
+                              <span style="color:#F5B800;letter-spacing:1px;">★★★★★</span> &nbsp; Google Reviews
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <!-- Subtle Reference Indicator -->
+                      <div style="margin-top:12px;display:inline-block;padding:4px 12px;background:#F1F6FA;border:1px solid #DDE6EE;border-radius:8px;font-size:12.5px;color:#475569;font-weight:700;">
+                        Booking Reference: <span style="color:#0F766E;font-weight:900;">{{JOB_NUMBER}}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 3. COMPACT CUSTOMER DETAILS (Subtle, Compact Horizontal Strip) -->
+            <tr>
+              <td class="section-space" style="padding:14px 40px 10px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                  style="width:100%;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;">
+                  <tr>
+                    <td width="25%" style="padding:11px 14px;border-right:1px solid #E2E8F0;vertical-align:top;" class="mobile-stack">
+                      <div style="font-size:10px;line-height:14px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Customer</div>
+                      <div style="margin-top:3px;font-size:13.5px;line-height:18px;color:#1E293B;font-weight:600;">{{CUSTOMER_NAME}}</div>
+                    </td>
+                    <td width="25%" style="padding:11px 14px;border-right:1px solid #E2E8F0;vertical-align:top;" class="mobile-stack">
+                      <div style="font-size:10px;line-height:14px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Phone</div>
+                      <div style="margin-top:3px;font-size:13.5px;line-height:18px;color:#1E293B;font-weight:600;">{{CUSTOMER_PHONE}}</div>
+                    </td>
+                    <td width="25%" style="padding:11px 14px;border-right:1px solid #E2E8F0;vertical-align:top;" class="mobile-stack">
+                      <div style="font-size:10px;line-height:14px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Email</div>
+                      <div style="margin-top:3px;font-size:13.5px;line-height:18px;color:#1E293B;font-weight:600;word-break:break-all;">{{CUSTOMER_EMAIL}}</div>
+                    </td>
+                    <td width="25%" style="padding:11px 14px;vertical-align:top;" class="mobile-stack-last">
+                      <div style="font-size:10px;line-height:14px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Booking ID</div>
+                      <div style="margin-top:3px;font-size:13.5px;line-height:18px;color:#0F766E;font-weight:800;">{{JOB_NUMBER}}</div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 4. CONFIRMED BOOKING DETAILS (Highlighted Container with Crisp Metric Cards) -->
+            <tr>
+              <td class="section-space" style="padding:14px 40px 10px;">
+                <div style="margin-bottom:12px;">
+                  <div class="section-title">Confirmed Booking Details</div>
+                  <div class="section-kicker">Schedule &amp; Resource Allocation</div>
+                </div>
+
+                <!-- Soft Light Outer Container with Crisp High-Contrast Borders -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                  style="width:100%;background:#F1F6FA;border:1.5px solid #BAC9D6;border-radius:14px;overflow:hidden;">
+                  <tr>
+                    <td style="padding:10px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <!-- Moving Date Tile -->
+                          <td width="50%" style="padding:4px;vertical-align:top;" class="mobile-stack">
+                            <div style="background:#FFFFFF;border:1.5px solid #BAC9D6;border-radius:10px;padding:14px 16px;box-sizing:border-box;min-height:92px;">
+                              <div class="info-label" style="color:#0F766E;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;">
+                                <span style="display:inline-block;padding:2px 6px;background:#E6FFFA;color:#0F766E;border-radius:4px;font-size:11px;margin-right:4px;">📅</span> Moving Date
+                              </div>
+                              <div class="info-value" style="font-size:16px;line-height:22px;font-weight:900;color:#101D4F;margin-top:6px;">{{SCHEDULED_DATE}}</div>
+                            </div>
+                          </td>
+
+                          <!-- Arrival Time Tile -->
+                          <td width="50%" style="padding:4px;vertical-align:top;" class="mobile-stack">
+                            <div style="background:#FFFFFF;border:1.5px solid #BAC9D6;border-radius:10px;padding:14px 16px;box-sizing:border-box;min-height:92px;">
+                              <div class="info-label" style="color:#0F766E;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;">
+                                <span style="display:inline-block;padding:2px 6px;background:#E6FFFA;color:#0F766E;border-radius:4px;font-size:11px;margin-right:4px;">⏰</span> Arrival Time / Window
+                              </div>
+                              <div class="info-value" style="font-size:16px;line-height:22px;font-weight:900;color:#0F766E;margin-top:6px;">{{SCHEDULED_TIME}}</div>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <!-- Allocated Vehicle Tile -->
+                          <td width="50%" style="padding:4px;padding-top:8px;vertical-align:top;" class="mobile-stack">
+                            <div style="background:#FFFFFF;border:1.5px solid #BAC9D6;border-radius:10px;padding:14px 16px;box-sizing:border-box;min-height:92px;">
+                              <div class="info-label" style="color:#475569;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;">
+                                <span style="display:inline-block;padding:2px 6px;background:#E0F2FE;color:#0284C7;border-radius:4px;font-size:11px;margin-right:4px;">🚛</span> Allocated Vehicle
+                              </div>
+                              <div class="info-value" style="font-size:15px;line-height:21px;font-weight:800;color:#1E293B;margin-top:6px;">{{TRUCK_SIZE}}</div>
+                            </div>
+                          </td>
+
+                          <!-- Removalist Crew Tile -->
+                          <td width="50%" style="padding:4px;padding-top:8px;vertical-align:top;" class="mobile-stack">
+                            <div style="background:#FFFFFF;border:1.5px solid #BAC9D6;border-radius:10px;padding:14px 16px;box-sizing:border-box;min-height:92px;">
+                              <div class="info-label" style="color:#475569;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;">
+                                <span style="display:inline-block;padding:2px 6px;background:#EDE9FE;color:#6D28D9;border-radius:4px;font-size:11px;margin-right:4px;">👷</span> Removalist Crew
+                              </div>
+                              <div class="info-value" style="font-size:15px;line-height:21px;font-weight:800;color:#1E293B;margin-top:6px;">{{MOVERS_COUNT}} Removalists</div>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 5. PICKUP → DROP-OFF ROUTE (Highlighted Route Container with Connected Cards) -->
+            <tr>
+              <td class="section-space" style="padding:14px 40px 10px;">
+                <div style="margin-bottom:12px;">
+                  <div class="section-title">Moving Route</div>
+                  <div class="section-kicker">Pickup &amp; Delivery Locations</div>
+                </div>
+
+                <!-- Soft Outer Shell -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                  style="width:100%;background:#F1F6FA;border:1.5px solid #BAC9D6;border-radius:14px;overflow:hidden;">
+                  <tr>
+                    <td style="padding:12px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <!-- Pickup Box -->
+                        <tr>
+                          <td style="padding:0 0 6px 0;">
+                            <div style="background:#F0FDF4;border:1.5px solid #86EFAC;border-left:5px solid #10B981;border-radius:10px;padding:14px 16px;box-sizing:border-box;">
+                              <span style="display:inline-block;padding:2px 8px;background:#D1FAE5;color:#065F46;border-radius:4px;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;">
+                                📍 Pickup / Origin
+                              </span>
+                              <div style="font-size:15px;line-height:22px;font-weight:800;color:#0F172A;margin-top:6px;">
+                                {{PICKUP_ADDRESS}}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+
+                        <!-- Route Connector -->
+                        <tr>
+                          <td align="center" style="padding:2px 0 2px 28px;text-align:left;">
+                            <div style="display:inline-block;padding:2px 10px;background:#E2E8F0;border-radius:6px;font-size:11px;font-weight:800;color:#475569;">
+                              ↓ IN TRANSIT ROUTE
+                            </div>
+                          </td>
+                        </tr>
+
+                        <!-- Drop-off Box -->
+                        <tr>
+                          <td style="padding:6px 0 0 0;">
+                            <div style="background:#F0F9FF;border:1.5px solid #93C5FD;border-left:5px solid #0284C7;border-radius:10px;padding:14px 16px;box-sizing:border-box;">
+                              <span style="display:inline-block;padding:2px 8px;background:#E0F2FE;color:#0369A1;border-radius:4px;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;">
+                                🏁 Drop-off / Destination
+                              </span>
+                              <div style="font-size:15px;line-height:22px;font-weight:800;color:#0F172A;margin-top:6px;">
+                                {{DROP_ADDRESS}}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 6. PAYMENT CONFIRMATION (Deposit Paid & Booking Secured Card) -->
+            <tr>
+              <td class="section-space" style="padding:14px 40px 16px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                  style="width:100%;background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:12px;overflow:hidden;">
+                  <tr>
+                    <td style="padding:18px 22px;vertical-align:middle;">
+                      <div style="font-size:13.5px;font-weight:800;color:#166534;">
+                        ✓ Deposit Paid &amp; Booking Secured
+                      </div>
+                      <div style="font-size:12px;color:#15803D;margin-top:3px;line-height:17px;">
+                        Your booking deposit has been received and will be deducted from your final bill.
+                      </div>
+                    </td>
+                    <td align="right" style="padding:18px 22px;text-align:right;vertical-align:middle;white-space:nowrap;">
+                      <div style="font-size:24px;font-weight:900;color:#166534;">
+                        {{DEPOSIT_AMOUNT}}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 7. COST BREAKDOWN & PRICING -->
+            {{COST_BREAKDOWN_SECTION}}
+
+            <!-- 8. BANK DETAILS FOR REMAINING BALANCE -->
+            {{BANK_DETAILS_SECTION}}
+
+            <!-- 9. TERMS & CONDITIONS -->
+            {{TERMS_SECTION}}
+
+            <!-- 10. BRANDED / THANK YOU BOX SECTION (Attractive Premium Box - No Truck) -->
+            <tr>
+              <td class="section-space" style="padding:0 40px 28px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" align="center"
+                  style="margin:0 auto;width:100%;background:linear-gradient(135deg, #071233 0%, #0D2055 50%, #0A2F7D 100%);border-radius:18px;border:2px solid #1E499F;box-shadow:0 16px 40px rgba(7,18,51,0.28);overflow:hidden;">
+                  <tr>
+                    <td style="padding:32px 28px;text-align:center;">
+                      
+                      <!-- Top Logo & Badges Row -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 16px auto;">
+                        <tr>
+                          <td align="center" style="padding-bottom:10px;">
+                            {{THANK_YOU_LOGO}}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center">
+                            <div style="display:inline-block;padding:5px 14px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.4);border-radius:999px;color:#FCD34D;font-size:11.5px;font-weight:800;letter-spacing:0.5px;">
+                              ★★★★★ 5.0 RATED SERVICE
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Main Heading -->
+                      <div style="font-size:22px;line-height:28px;font-weight:900;color:#FFFFFF;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:8px;">
+                        THANK YOU FOR CHOOSING DELIVERY PLUS
+                      </div>
+                      
+                      <!-- Tagline -->
+                      <div style="font-size:13.5px;line-height:20px;color:#CBD5E1;max-width:520px;margin:0 auto 22px auto;">
+                        Trusted Transit at Affordable Prices · Reliable moving &amp; logistics support from quotation to completion.
+                      </div>
+
+                      <!-- 3 Feature Guarantees Grid (Single line icon + text) -->
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 24px auto;max-width:580px;">
+                        <tr>
+                          <td width="33.33%" style="padding:4px;vertical-align:top;">
+                            <div style="height:78px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:12px 8px;text-align:center;">
+                              <div style="font-size:12px;line-height:18px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;">
+                                <span style="display:inline-block;width:20px;font-size:15px;line-height:18px;text-align:center;vertical-align:middle;">🛡️</span><span style="display:inline-block;line-height:18px;vertical-align:middle;">Fully Insured</span>
+                              </div>
+                              <div style="font-size:10.5px;line-height:16px;color:#94A3B8;margin-top:4px;white-space:nowrap;">Transit Protection</div>
+                            </div>
+                          </td>
+                          <td width="33.33%" style="padding:4px;vertical-align:top;">
+                            <div style="height:78px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:12px 8px;text-align:center;">
+                              <div style="font-size:12px;line-height:18px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;">
+                                <span style="display:inline-block;width:20px;font-size:15px;line-height:18px;text-align:center;vertical-align:middle;">⏱️</span><span style="display:inline-block;line-height:18px;vertical-align:middle;">On-Time Service</span>
+                              </div>
+                              <div style="font-size:10.5px;line-height:16px;color:#94A3B8;margin-top:4px;white-space:nowrap;">Punctual &amp; Reliable</div>
+                            </div>
+                          </td>
+                          <td width="33.33%" style="padding:4px;vertical-align:top;">
+                            <div style="height:78px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:12px 8px;text-align:center;">
+                              <div style="font-size:12px;line-height:18px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;">
+                                <span style="display:inline-block;width:20px;font-size:15px;line-height:18px;text-align:center;vertical-align:middle;">👷</span><span style="display:inline-block;line-height:18px;vertical-align:middle;">Expert Movers</span>
+                              </div>
+                              <div style="font-size:10.5px;line-height:16px;color:#94A3B8;margin-top:4px;white-space:nowrap;">Trained Professionals</div>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Action Buttons (Single line icon + text) -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+                        <tr>
+                          <td style="padding:5px 6px;">
+                            <a href="tel:0370085094" style="display:inline-block;padding:10px 18px;background:#00B9E8;border-radius:10px;color:#071233;text-decoration:none;font-size:13px;line-height:18px;font-weight:900;white-space:nowrap;box-shadow:0 4px 16px rgba(0,185,232,0.38);">
+                              <span style="display:inline-block;width:18px;font-size:14px;line-height:18px;text-align:center;vertical-align:middle;">📞</span><span style="display:inline-block;line-height:18px;vertical-align:middle;">03 7008 5094</span>
+                            </a>
+                          </td>
+                          <td style="padding:5px 6px;">
+                            <a href="tel:0424796524" style="display:inline-block;padding:10px 18px;background:rgba(0,185,232,0.18);border:1.5px solid #00B9E8;border-radius:10px;color:#00B9E8;text-decoration:none;font-size:13px;line-height:18px;font-weight:800;white-space:nowrap;">
+                              <span style="display:inline-block;width:18px;font-size:14px;line-height:18px;text-align:center;vertical-align:middle;">📱</span><span style="display:inline-block;line-height:18px;vertical-align:middle;">04 2479 6524</span>
+                            </a>
+                          </td>
+                          <td style="padding:5px 6px;">
+                            <a href="https://deliveryplus.com.au" target="_blank" style="display:inline-block;padding:10px 18px;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.28);border-radius:10px;color:#FFFFFF;text-decoration:none;font-size:13px;line-height:18px;font-weight:800;white-space:nowrap;">
+                              <span style="display:inline-block;width:18px;font-size:14px;line-height:18px;text-align:center;vertical-align:middle;">🌐</span><span style="display:inline-block;line-height:18px;vertical-align:middle;">deliveryplus.com.au</span>
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- 11. NEED HELP / SIGNOFF -->
+            <tr>
+              <td class="signoff-pad" style="padding:10px 40px 32px;">
+                <div style="font-size:14px;line-height:22px;color:#59677A;">
+                  If you need to make any changes or have questions about your scheduled move, please contact our dispatch team at <a href="tel:+61370085094" style="color:#0F766E;font-weight:700;">03 7008 5094</a> or <a href="tel:+61424796524" style="color:#0F766E;font-weight:700;">04 2479 6524</a>.
+                </div>
+                <div style="margin-top:18px;font-size:14px;line-height:22px;color:#172033;font-weight:700;">
+                  Thank you,<br>
+                  <span style="color:#101D4F;">The Delivery Plus Team</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 12. FOOTER -->
+            <tr>
+              <td class="footer-pad" style="padding:24px 36px;background:#0D1B4C;border-top:1px solid #1E2D64;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td width="55%" class="footer-left" style="color:#8FA9CC;font-size:12px;line-height:18px;">
+                      © 2026 Delivery Plus Australia. All rights reserved.<br>
+                      Professional Relocation &amp; Logistics Services.
+                    </td>
+                    <td width="45%" align="right" class="footer-right" style="text-align:right;color:#BFD6EE;font-size:12px;line-height:18px;">
+                      <a href="https://deliveryplus.com.au" style="color:#14B8A6;font-weight:700;">www.deliveryplus.com.au</a><br>
+                      info@deliveryplus.com.au
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+          <!--[if mso]>
+          </td></tr></table>
+          <![endif]-->
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

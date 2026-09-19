@@ -5,7 +5,10 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
-  role: { type: String, enum: ['admin', 'driver', 'customer'], default: 'customer' },
+  role: { type: String, enum: ['super_admin', 'superAdmin', 'admin', 'manager', 'driver', 'customer'], default: 'customer' },
+  permissions: [{ type: String, trim: true }],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  creatorNameSnapshot: { type: String, trim: true },
   phone: { type: String, trim: true },
   avatar: { type: String },
   isActive: { type: Boolean, default: true },
@@ -14,6 +17,7 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.index({ role: 1, isActive: 1 });
+userSchema.index({ createdBy: 1 });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

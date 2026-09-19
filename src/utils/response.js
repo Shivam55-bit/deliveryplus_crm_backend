@@ -2,6 +2,10 @@ export const sendResponse = (res, statusCode, data, message = 'Success') => {
   res.status(statusCode).json({ success: true, message, data });
 };
 
+export const sendSuccess = (res, statusCode = 200, message = 'Success', data = null) => {
+  res.status(statusCode).json({ success: true, message, data });
+};
+
 export const sendError = (res, statusCode, message = 'Error', errors = null) => {
   const response = { success: false, message };
   if (errors) response.errors = errors;

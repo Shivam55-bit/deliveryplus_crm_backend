@@ -1,0 +1,2015 @@
+const escapeHtml = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const hasValue = (value) =>
+  value !== undefined &&
+  value !== null &&
+  value !== '';
+
+const firstValue = (...values) =>
+  values.find(hasValue);
+
+const displayValue = (value) =>
+  hasValue(value) ? String(value) : 'N/A';
+
+const safeText = (value, fallback = 'Not provided') => {
+  if (!hasValue(value)) return fallback;
+
+  const text = String(value).trim();
+  return text || fallback;
+};
+
+const toNumber = (value, fallback = 0) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+};
+
+const roundMoney = (value) =>
+  Math.round((toNumber(value) + Number.EPSILON) * 100) / 100;
+
+const formatCurrency = (value) => {
+  if (!hasValue(value)) return 'N/A';
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    return 'N/A';
+  }
+
+  return new Intl.NumberFormat('en-AU', {
+    style: 'currency',
+    currency: 'AUD',
+  }).format(amount);
+};
+
+const formatDate = (value) => {
+  if (!value) return 'N/A';
+
+  const raw = String(value);
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'N/A';
+  }
+
+  return new Intl.DateTimeFormat('en-AU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Australia/Melbourne',
+  }).format(date);
+};
+
+const formatTime = (value) => {
+  if (!value) return 'N/A';
+
+  const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+
+  if (!match) {
+    return String(value);
+  }
+
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+
+  hours = hours % 12 || 12;
+
+  return `${hours}:${minutes} ${suffix}`;
+};
+
+const formatDurationMinutes = (value) => {
+  const totalMinutes = Math.max(0, Math.round(toNumber(value, 0)));
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} ${hours === 1 ? 'Hr' : 'Hrs'} ${minutes} Mins`;
+  }
+
+  if (hours > 0) {
+    return `${hours} ${hours === 1 ? 'Hr' : 'Hrs'}`;
+  }
+
+  return `${minutes} Mins`;
+};
+
+const formatAddress = ({
+  address,
+  suburb,
+  state,
+  postcode,
+}) => [
+  address,
+  suburb,
+  state,
+  postcode,
+]
+  .filter(hasValue)
+  .map((value) => String(value).trim())
+  .filter(Boolean)
+  .join(', ');
+
+const formatTruckSize = (value) => {
+  if (!hasValue(value)) {
+    return 'Not provided';
+  }
+
+  const raw = String(value).trim();
+
+  if (!raw) {
+    return 'Not provided';
+  }
+
+  if (/tonne/i.test(raw)) {
+    return raw;
+  }
+
+  const cleaned = raw
+    .replace(/\s*(tons?|tonnes?|t)\s*$/i, '')
+    .trim();
+
+  return cleaned
+    ? `${cleaned} Tonne`
+    : 'Not provided';
+};
+
+const formatItemList = (job = {}) => {
+  const rawValue =
+    job.lineItems ??
+    job.itemList ??
+    job.lineItemsText ??
+    job.items ??
+    job.movingItems ??
+    job.inventory ??
+    job.jobItems ??
+    '';
+
+  if (typeof rawValue === 'string') {
+    const values = rawValue
+      .split(/[\n,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    return values.length ? values.join(', ') : 'Not provided';
+  }
+
+  if (Array.isArray(rawValue)) {
+    const values = rawValue
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item.trim();
+        }
+
+        const description = String(
+          item?.description ??
+          item?.name ??
+          item?.title ??
+          item?.item ??
+          ''
+        ).trim();
+
+        if (!description) return '';
+
+        const quantity = Number(item?.quantity);
+
+        return Number.isFinite(quantity) && quantity > 1
+          ? `${description} × ${quantity}`
+          : description;
+      })
+      .filter(Boolean);
+
+    return values.length ? values.join(', ') : 'Not provided';
+  }
+
+  return 'Not provided';
+};
+
+const formatPropertySize = (job = {}) => {
+  const rawValue = firstValue(
+    job.propertySize,
+    job.sizeOfProperty,
+    job.bedrooms,
+    job.houseSize,
+    job.moveSize,
+  );
+
+  if (!hasValue(rawValue)) {
+    return 'Not provided';
+  }
+
+  if (typeof rawValue === 'number') {
+    return `${rawValue} bedroom${rawValue === 1 ? '' : 's'}`;
+  }
+
+  return safeText(rawValue, 'Not provided');
+};
+
+const getBookingDepositValue = (job = {}) => {
+  const deposit = Number(firstValue(
+    job.bookingDeposit,
+    job.bookingDepositAmount,
+    job.confirmationAmount,
+    job.depositAmount,
+    50,
+  ));
+
+  if (!Number.isFinite(deposit) || deposit < 0) {
+    return 50;
+  }
+
+  return deposit;
+};
+
+const getCanonicalDropAddress = (job = {}) =>
+  formatAddress({
+    address: firstValue(
+      job.dropoffAddress,
+      job.dropAddress,
+      job.dropOffAddress,
+      job.deliveryAddress,
+      job.dropoff?.address,
+      job.destination?.address,
+    ),
+    suburb: firstValue(
+      job.dropSuburb,
+      job.dropOffSuburb,
+      job.dropoff?.suburb,
+    ),
+    state: firstValue(
+      job.dropState,
+      job.dropOffState,
+      job.dropoff?.state,
+    ),
+    postcode: firstValue(
+      job.dropPostcode,
+      job.dropOffPostcode,
+      job.dropoff?.postcode,
+    ),
+  });
+
+const getCanonicalPickupAddress = (job = {}) =>
+  formatAddress({
+    address: firstValue(
+      job.pickupAddress,
+      job.pickUpAddress,
+      job.pickup?.address,
+      job.origin?.address,
+    ),
+    suburb: firstValue(
+      job.pickupSuburb,
+      job.pickup?.suburb,
+    ),
+    state: firstValue(
+      job.pickupState,
+      job.pickup?.state,
+    ),
+    postcode: firstValue(
+      job.pickupPostcode,
+      job.pickup?.postcode,
+    ),
+  });
+
+const getCanonicalCalloutMinutes = (job = {}, rawPricing = {}) => {
+  if (hasValue(rawPricing.calloutTimeMinutes)) {
+    return Math.max(
+      0,
+      toNumber(rawPricing.calloutTimeMinutes),
+    );
+  }
+
+  if (hasValue(job.calloutTimeMinutes)) {
+    return Math.max(
+      0,
+      toNumber(job.calloutTimeMinutes),
+    );
+  }
+
+  return Math.max(
+    0,
+    toNumber(job.callOutTimeHr) * 60 +
+    toNumber(job.callOutTimeMin),
+  );
+};
+
+const getCanonicalTravelBackMinutes = (job = {}, rawPricing = {}) => {
+  if (hasValue(rawPricing.travelBackTimeMinutes)) {
+    return Math.max(
+      0,
+      toNumber(rawPricing.travelBackTimeMinutes),
+    );
+  }
+
+  if (hasValue(job.travelBackTimeMinutes)) {
+    return Math.max(
+      0,
+      toNumber(job.travelBackTimeMinutes),
+    );
+  }
+
+  return Math.max(
+    0,
+    toNumber(job.travelBackTimeHr) * 60 +
+    toNumber(job.travelBackTimeMin),
+  );
+};
+
+const getPricingObject = (job = {}) => {
+  const rawPricing =
+    job.pricing ??
+    job.pricingSnapshot ??
+    {};
+
+  const hourlyRate = toNumber(firstValue(
+    rawPricing.hourlyRate,
+    job.hourlyRate,
+    job.price,
+    job.rate,
+  ));
+
+  const minimumChargeHours = toNumber(firstValue(
+    rawPricing.minimumChargeHours,
+    job.minimumChargeHours,
+    job.minimumHours,
+    job.minimumDuration,
+    job.estimatedHours,
+    2.5,
+  ), 2.5);
+
+  const calloutTimeMinutes =
+    getCanonicalCalloutMinutes(job, rawPricing);
+
+  const travelBackTimeMinutes =
+    getCanonicalTravelBackMinutes(job, rawPricing);
+
+  const calculatedMinimumLaborCost =
+    roundMoney(hourlyRate * minimumChargeHours);
+
+  const storedMinimumLaborCost = toNumber(firstValue(
+    rawPricing.minimumLaborCost,
+    job.minimumLaborCost,
+    job.minimumCost,
+  ));
+
+  const minimumLaborCost =
+    storedMinimumLaborCost > 0
+      ? storedMinimumLaborCost
+      : calculatedMinimumLaborCost;
+
+  const storedCalloutCharge = toNumber(firstValue(
+    rawPricing.calloutCharge,
+    job.calloutCharge,
+    job.callOutFee,
+    job.calloutFee,
+    job.callOutCharge,
+  ));
+
+  const calculatedCalloutCharge = roundMoney(
+    (hourlyRate / 60) *
+    calloutTimeMinutes,
+  );
+
+  const calloutCharge =
+    calloutTimeMinutes > 0 &&
+    hourlyRate > 0 &&
+    storedCalloutCharge <= 0
+      ? calculatedCalloutCharge
+      : storedCalloutCharge;
+
+  const storedTravelBackCharge = toNumber(firstValue(
+    rawPricing.travelBackCharge,
+    job.travelBackCharge,
+    job.travelBackFee,
+    job.returnTravelCharge,
+  ));
+
+  const calculatedTravelBackCharge = roundMoney(
+    (hourlyRate / 60) *
+    travelBackTimeMinutes,
+  );
+
+  const travelBackCharge =
+    travelBackTimeMinutes > 0 &&
+    hourlyRate > 0 &&
+    storedTravelBackCharge <= 0
+      ? calculatedTravelBackCharge
+      : storedTravelBackCharge;
+
+  const calculatedMinimumEstimatedCost = roundMoney(
+    minimumLaborCost +
+    calloutCharge +
+    travelBackCharge,
+  );
+
+  const storedMinimumEstimatedCost = toNumber(firstValue(
+    rawPricing.minimumEstimatedCost,
+    job.minimumEstimatedCost,
+    job.estimatedCost,
+  ));
+
+  const minimumEstimatedCost =
+    storedMinimumEstimatedCost > 0
+      ? storedMinimumEstimatedCost
+      : calculatedMinimumEstimatedCost;
+
+  return {
+    hourlyRate,
+    minimumChargeHours,
+    minimumChargeMinutes:
+      Math.round(minimumChargeHours * 60),
+
+    minimumLaborCost,
+
+    calloutCharge,
+    calloutTimeMinutes,
+
+    travelBackCharge,
+    travelBackTimeMinutes,
+
+    minimumEstimatedCost,
+
+    extraTimeBlockMinutes:
+      rawPricing.extraTimeBlockMinutes ?? 30,
+
+    extraTimeRatePerBlock:
+      rawPricing.extraTimeRatePerBlock,
+
+    extraTimeCharge:
+      toNumber(rawPricing.extraTimeCharge),
+
+    finalTotal: toNumber(firstValue(
+      rawPricing.finalTotal,
+      job.finalTotal,
+      job.totalAmount,
+      job.billing?.totalAmount,
+    )),
+  };
+};
+
+const buildQuotationEmailData = (job = {}) => {
+  const pricing = getPricingObject(job);
+
+  const jobReference = firstValue(
+    job.jobNumber,
+    job.quoteRef,
+    job.jobReference,
+    job.referenceNumber,
+  );
+
+  const normalizedJobType = String(firstValue(
+    job.jobType,
+    job.type,
+    job.category,
+    '',
+  ) || '')
+    .trim()
+    .toLowerCase();
+
+  const customerName = firstValue(
+    job.customerName,
+    job.customer?.name,
+    job.name,
+    'Customer',
+  );
+
+  const customerEmail = firstValue(
+    job.customerEmail,
+    job.customer?.email,
+    job.email,
+    '',
+  );
+
+  const customerPhone = firstValue(
+    job.customerPhone,
+    job.customer?.phone,
+    job.phone,
+    '',
+  );
+
+  const scheduleMode = String(firstValue(
+    job.scheduleMode,
+    job.scheduledTimeMode,
+    job.scheduleType,
+    '',
+  ) || '')
+    .trim()
+    .toLowerCase();
+
+  const scheduledDate = firstValue(
+    job.scheduledDate,
+    job.scheduledAt,
+    job.date,
+  ) || '';
+
+  const scheduledTime =
+    scheduleMode === 'window'
+      ? `${formatTime(firstValue(
+          job.scheduledStartTime,
+          job.startTime,
+          job.scheduledFrom,
+        ))} - ${formatTime(firstValue(
+          job.scheduledEndTime,
+          job.endTime,
+          job.scheduledTo,
+        ))}`
+      : formatTime(firstValue(
+          job.scheduledTime,
+          job.time,
+          job.scheduledAtTime,
+        ));
+
+  const rawTruckSize = firstValue(
+    job.truckSize,
+    job.vehicleSize,
+    job.truckType,
+    job.truckSizeCount,
+  );
+
+  const fixedPrice = toNumber(firstValue(
+    job.fixedPrice,
+    job.fixedQuote,
+    job.quoteAmount,
+    job.pricing?.fixedPrice,
+  ));
+
+  const notes = [
+    firstValue(job.notes, ''),
+    firstValue(job.specialInstructions, ''),
+  ]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)
+    .join('\n\n');
+
+  return {
+    jobReference,
+    jobType: normalizedJobType,
+    isMovingJob: normalizedJobType === 'moving',
+
+    customerName,
+    customerEmail,
+    customerPhone,
+
+    pickupAddress:
+      getCanonicalPickupAddress(job),
+
+    dropAddress:
+      getCanonicalDropAddress(job),
+
+    scheduledDate,
+    scheduledTime,
+
+    propertySize:
+      firstValue(
+        job.propertySize,
+        job.sizeOfProperty,
+        job.bedrooms,
+        job.houseSize,
+        job.moveSize,
+        job.size,
+      ) || '',
+
+    itemList:
+      formatItemList(job),
+
+    pricingType:
+      String(firstValue(
+        job.pricingType,
+        job.pricing?.type,
+        '',
+      ) || '').toLowerCase(),
+
+    hourlyRate:
+      pricing.hourlyRate,
+
+    fixedPrice,
+
+    truckSize:
+      formatTruckSize(rawTruckSize),
+
+    movers:
+      firstValue(
+        job.movers,
+        job.numberOfMovers,
+        job.moverCount,
+      ),
+
+    minimumHours:
+      pricing.minimumChargeHours,
+
+    minimumLaborCost:
+      pricing.minimumLaborCost,
+
+    minimumEstimatedCost:
+      pricing.minimumEstimatedCost,
+
+    calloutCharge:
+      pricing.calloutCharge,
+
+    calloutTimeMinutes:
+      pricing.calloutTimeMinutes,
+
+    travelBackCharge:
+      pricing.travelBackCharge,
+
+    travelBackTimeMinutes:
+      pricing.travelBackTimeMinutes,
+
+    depositAmount:
+      getBookingDepositValue(job),
+
+    notes,
+
+    pricing,
+  };
+};
+
+const makeLogoAttachment = () => {
+  const candidatePath =
+    process.env.DELIVERY_PLUS_LOGO_PATH ||
+    '/var/www/hub-crm-frontend/src/assets/delivery_plus_logo.png';
+
+  return candidatePath
+    ? [{
+        filename: 'delivery-plus-logo.png',
+        path: candidatePath,
+        cid: 'deliveryplus-logo',
+      }]
+    : [];
+};
+
+// ---------------------------------------------------------------------------
+// EMAIL LAYOUT (advanced, responsive design — desktop / tablet / mobile)
+// ---------------------------------------------------------------------------
+
+const renderEmailLayout = ({
+  subject,
+  heading,
+  intro,
+  accentText,
+  bodyHtml,
+  accentColor,
+  badgeGradient,
+  attachments: additionalAttachments = [],
+}) => {
+  const attachments = [
+    ...makeLogoAttachment(),
+    ...Array.isArray(additionalAttachments) ? additionalAttachments : [],
+  ];
+
+  const html = `
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="light" />
+        <title>${escapeHtml(subject)}</title>
+
+        <!--[if mso]>
+        <noscript>
+          <xml>
+            <o:OfficeDocumentSettings>
+              <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+          </xml>
+        </noscript>
+        <![endif]-->
+
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+          * { box-sizing: border-box; }
+
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #eef1f8 !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+          }
+
+          table { border-collapse: collapse; border-spacing: 0; }
+          img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+          .font-display { font-family: 'Poppins', Arial, Helvetica, sans-serif; }
+          .font-body { font-family: 'Inter', Arial, Helvetica, sans-serif; }
+
+          .email-container { width: 100% !important; max-width: 1200px !important; }
+          .mobile-padding { padding-left: 34px !important; padding-right: 34px !important; }
+          .desktop-version { display: table !important; }
+          .mobile-version { display: none !important; }
+          .email-heading { font-size: 32px !important; line-height: 39px !important; }
+          .intro-text { font-size: 15px !important; line-height: 23px !important; }
+          .section-label { font-size: 12px !important; }
+          .section-value { font-size: 13px !important; }
+          .kv-row td:first-child { font-size: 12px !important; }
+          .kv-row td:last-child { font-size: 13px !important; }
+
+          .hero-band {
+            background: linear-gradient(120deg, #0b1440 0%, #0d1945 45%, #0a2e52 100%);
+          }
+          .accent-strip {
+            background: linear-gradient(90deg, ${accentColor}cc 0%, ${accentColor} 50%, #6fe0e8 100%);
+          }
+          .glow-badge {
+            background: ${badgeGradient};
+          }
+          .total-card {
+            background: linear-gradient(135deg, #0f2358 0%, #0b1a3d 60%, #081431 100%);
+          }
+
+          /* TABLET */
+          @media only screen and (max-width: 900px) {
+            .email-container { width: 100% !important; max-width: 100% !important; }
+            .mobile-padding { padding-left: 28px !important; padding-right: 28px !important; }
+          }
+
+          /* MOBILE */
+          @media only screen and (max-width: 600px) {
+            .outer-cell { padding: 0 !important; }
+            .email-container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
+            .mobile-padding { padding-left: 18px !important; padding-right: 18px !important; }
+            .desktop-version { display: none !important; }
+            .mobile-version { display: table !important; width: 100% !important; }
+
+            .header-logo-cell, .header-contact-cell {
+              display: block !important;
+              width: 100% !important;
+              text-align: left !important;
+            }
+            .header-contact-cell { padding-top: 14px !important; text-align: left !important; }
+
+            .email-heading { font-size: 25px !important; line-height: 31px !important; }
+            .hero-pad { padding: 26px 18px 14px !important; }
+
+            .total-value { font-size: 26px !important; }
+            .stack-cell { display: block !important; width: 100% !important; }
+            .stack-right { text-align: left !important; padding-top: 4px !important; }
+            .kv-row td { display: block !important; width: 100% !important; text-align: left !important; padding: 4px 0 !important; }
+            .kv-row td:first-child { color: #8994a8 !important; font-size: 10px !important; text-transform: uppercase; letter-spacing: .5px; }
+            .footer-cell { display: block !important; width: 100% !important; text-align: left !important; }
+            .footer-right { text-align: left !important; padding-top: 10px !important; }
+          }
+        </style>
+      </head>
+
+      <body style="margin:0;padding:0;width:100%;background:#eef1f8;">
+        <table
+          role="presentation"
+          width="100%"
+          border="0"
+          cellpadding="0"
+          cellspacing="0"
+          style="width:100%;margin:0;padding:0;background:#eef1f8;"
+        >
+          <tr>
+            <td align="center" class="outer-cell" style="padding:20px 24px;">
+
+              <!--[if mso]>
+              <!--[if mso]>
+              <table role="presentation" width="1200" cellpadding="0" cellspacing="0" border="0">
+                <tr><td>
+              <![endif]-->
+              <![endif]-->
+
+              <table
+                role="presentation"
+                width="100%"
+                border="0"
+                cellpadding="0"
+                cellspacing="0"
+                class="email-container"
+                style="
+                  width:100%;
+                  max-width:1400px;
+                  margin:0 auto;
+                  background:#ffffff;
+                  border-radius:18px;
+                  overflow:hidden;
+                  box-shadow:0 20px 45px rgba(11,22,61,0.16);
+                "
+              >
+                <!-- HERO HEADER -->
+                <tr>
+                  <td class="hero-band hero-pad" style="padding:24px 34px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="58%" valign="middle" class="header-logo-cell stack-cell">
+                          ${
+                            attachments.length > 0
+                              ? `
+                                <img
+                                  src="cid:deliveryplus-logo"
+                                  alt="Delivery Plus"
+                                  width="230"
+                                  style="display:block;width:230px;max-width:100%;height:auto;border:0;"
+                                />
+                              `
+                              : `
+                                <div class="font-display" style="color:#ffffff;font-size:23px;line-height:28px;font-weight:900;letter-spacing:.2px;">
+                                  Delivery&nbsp;<span style="color:#5fe3f0;">Plus</span>
+                                </div>
+                              `
+                          }
+                          <div class="font-body" style="margin-top:4px;color:#9fb2d6;font-size:11px;letter-spacing:.5px;">
+                            AUSTRALIA &nbsp;•&nbsp; REMOVALS &amp; TRANSIT
+                          </div>
+                        </td>
+
+                        <td
+                          width="42%"
+                          valign="middle"
+                          align="right"
+                          class="header-contact-cell stack-cell stack-right"
+                          style="text-align:right;color:#eef4ff;font-size:11.5px;line-height:18px;"
+                        >
+                          <div class="font-body" style="font-weight:700;color:#5fe3f0;letter-spacing:.3px;">
+                            Trusted Transit at Affordable Prices
+                          </div>
+
+                          <div>
+                            <a href="tel:+61370085094" style="color:#dbe6ff;text-decoration:none;">
+                              ☎ 03 7008 5094
+                            </a>
+                          </div>
+
+                          <div>
+                            <a href="tel:+61424796524" style="color:#dbe6ff;text-decoration:none;">
+                              ☎ 04 2479 6524
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="accent-strip" style="height:5px;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+
+                <tr>
+                  <td
+                    class="mobile-padding"
+                    style="
+                      padding-top:30px;
+                      padding-left:34px;
+                      padding-right:34px;
+                      padding-bottom:14px;
+                      background:#ffffff;
+                    "
+                  >
+                    <div
+                      class="glow-badge font-body"
+                      style="
+                        display:inline-block;
+                        padding:7px 14px;
+                        color:#ffffff;
+                        border-radius:999px;
+                        font-size:10.5px;
+                        font-weight:800;
+                        letter-spacing:1px;
+                        text-transform:uppercase;
+                        box-shadow:0 6px 14px rgba(10,163,191,0.35);
+                      "
+                    >
+                      ${escapeHtml(accentText)}
+                    </div>
+
+                    <h1
+                      class="email-heading font-display"
+                      style="
+                        margin:15px 0 8px;
+                        color:#0b163d;
+                        font-size:30px;
+                        line-height:37px;
+                        font-weight:800;
+                      "
+                    >
+                      ${escapeHtml(heading)}
+                    </h1>
+
+                    <p class="font-body intro-text" style="margin:0;color:#5f6b80;font-size:15px;line-height:23px;">
+                      ${escapeHtml(intro)}
+                    </p>
+
+                    <div style="margin-top:14px;">
+                      <a
+                        href="https://maps.app.goo.gl/RgeqtH484Hqz1FQY8?g_st=i"
+                        class="font-body"
+                        style="color:#0aa3bf;text-decoration:none;font-size:12.5px;font-weight:700;"
+                      >
+                        ★★★★★ &nbsp;Read our Google Reviews →
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td
+                    class="mobile-padding"
+                    style="
+                      padding-left:34px;
+                      padding-right:34px;
+                      padding-bottom:34px;
+                      background:#ffffff;
+                    "
+                  >
+                    ${bodyHtml}
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td class="hero-band" style="padding:24px 34px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td class="footer-cell font-body" style="color:#b9c5d6;font-size:11.5px;line-height:19px;">
+                          Regards,<br />
+                          <strong style="color:#ffffff;font-size:13.5px;">Anu</strong><br />
+                          Team Delivery Plus
+                        </td>
+
+                        <td
+                          align="right"
+                          class="footer-cell footer-right font-body"
+                          style="color:#5fe3f0;font-size:11.5px;line-height:19px;text-align:right;"
+                        >
+                          03 7008 5094<br />
+                          04 2479 6524
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!--[if mso]>
+              </td></tr></table>
+              <![endif]-->
+
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+
+  return {
+    subject,
+    html,
+    attachments,
+  };
+};
+
+const renderTermsAndConditions = () => `
+  <table
+    role="presentation"
+    width="100%"
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    style="width:100%;margin-top:22px;border-top:1px solid #eaeef5;"
+  >
+    <tr>
+      <td style="padding-top:20px;">
+        <div class="font-body" style="color:#0aa3bf;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;">
+          Please Read
+        </div>
+
+        <div class="font-display" style="margin-top:4px;color:#0b163d;font-size:18px;font-weight:800;">
+          Terms &amp; Conditions
+        </div>
+
+        <div class="font-body" style="margin-top:13px;color:#5c6879;font-size:11px;line-height:18px;">
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">1. Payment:</strong>
+            All payments must be made via cash, EFTPOS, or cleared bank transfer
+            before or upon pickup. No work will commence without payment confirmation.
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">2. Claims and Complaints:</strong>
+            No claims will be entertained once the driver has left the pickup or
+            delivery address. Any issues must be reported before departure.
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">3. Fragile Items and Customer-Packed Boxes:</strong>
+            Delivery Plus Australia holds no responsibility for fragile or loose items
+            such as glassware, mirrors, or goods packed by the customer.
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">4. Stairs and Tolls:</strong>
+            All toll fees and stair-related access charges are to be paid by the
+            customer unless otherwise stated in the quote.
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">5. Hard Access Properties:</strong>
+            Additional charges may apply for difficult access including long carry
+            distances, steep driveways, or narrow access.
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">6. Cubic Metre Limit:</strong>
+            The customer is allocated the truck space quoted. Additional charges may
+            apply if the load exceeds the quoted volume.
+          </div>
+
+          <div style="margin-bottom:9px;">
+            <strong style="color:#253149;">7. TVs, Electronics and Fragile Goods:</strong>
+            Please refer to the detailed Terms & Conditions supplied with the booking
+            confirmation for limitations relating to fragile and sensitive goods.
+          </div>
+
+          <div>
+            <strong style="color:#253149;">8. Property Access and Damage Waiver:</strong>
+            Where stairs or difficult access exist, the applicable damage waiver and
+            access conditions apply.
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+`;
+
+// ---------------------------------------------------------------------------
+// QUOTATION EMAIL
+// ---------------------------------------------------------------------------
+
+export const buildQuotationEmail = (job = {}, { attachments = [] } = {}) => {
+  const data = buildQuotationEmailData(job);
+  const { pricing } = data;
+
+  const jobNumber = safeText(data.jobReference, 'N/A');
+  const customerName = safeText(data.customerName, 'Customer');
+  const customerPhone = safeText(data.customerPhone, 'N/A');
+  const customerEmail = safeText(data.customerEmail, 'N/A');
+  const pickupAddress = safeText(data.pickupAddress, 'N/A');
+  const dropAddress = safeText(data.dropAddress, 'N/A');
+  const scheduledDate = formatDate(data.scheduledDate);
+  const scheduledTime = safeText(data.scheduledTime, 'N/A');
+  const propertySizeText = formatPropertySize({ propertySize: data.propertySize });
+  const itemListText = safeText(data.itemList, 'Not provided');
+  const depositAmount = data.depositAmount;
+  const truckSize = safeText(data.truckSize, 'Not provided');
+  const movers = hasValue(data.movers) ? data.movers : 'Not provided';
+
+  const priceLabel =
+    data.pricingType === 'fixed'
+      ? formatCurrency(data.fixedPrice)
+      : `${formatCurrency(data.hourlyRate)} / hour`;
+
+  const quotationAttachments = [
+    ...makeLogoAttachment(),
+    ...(Array.isArray(attachments) ? attachments : []),
+  ];
+
+  const movingDetailsHtml = data.isMovingJob
+    ? `
+      <tr>
+        <td class="section-space" style="padding:0 40px 28px;">
+          <div style="margin-bottom:14px;">
+            <div style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Moving Service</div>
+            <div style="margin-top:3px;font-size:12px;line-height:16px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.8px;">Moving Details</div>
+          </div>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="width:100%;background:#ffffff;border:1px solid #DDE6EE;border-radius:12px;overflow:hidden;">
+            <tr>
+              <td width="50%" class="two-col-cell" style="padding:15px 20px;border-right:1px solid #DDE6EE;border-bottom:1px solid #DDE6EE;">
+                <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Truck Size</div>
+                <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(truckSize)}</div>
+              </td>
+              <td width="50%" class="two-col-cell" style="padding:15px 20px;border-bottom:1px solid #DDE6EE;">
+                <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Movers</div>
+                <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(movers)}</div>
+              </td>
+            </tr>
+            <tr>
+              <td width="50%" class="two-col-cell" style="padding:15px 20px;border-right:1px solid #DDE6EE;">
+                <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Size of Property</div>
+                <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(propertySizeText)}</div>
+              </td>
+              <td width="50%" class="two-col-cell" style="padding:15px 20px;">
+                <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">List of Items</div>
+                <div style="margin-top:4px;font-size:15px;line-height:21px;color:#172033;font-weight:700;">${escapeHtml(itemListText)}</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="section-space" style="padding:0 40px 28px;">
+          <div style="margin-bottom:14px;">
+            <div style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Cost Breakdown</div>
+            <div style="margin-top:3px;font-size:12px;line-height:16px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.8px;">Pricing Summary</div>
+          </div>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="width:100%;background:#ffffff;border:1px solid #DDE6EE;border-radius:12px;overflow:hidden;">
+            <tr>
+              <td style="padding:14px 24px;border-bottom:1px solid #DDE6EE;color:#64748B;font-size:14px;font-weight:600;">Hourly Rate</td>
+              <td align="right" style="padding:14px 24px;border-bottom:1px solid #DDE6EE;color:#172033;font-size:15px;font-weight:800;text-align:right;">${escapeHtml(priceLabel)}</td>
+            </tr>
+            <tr style="background:#FAFCFE;">
+              <td style="padding:14px 24px;border-bottom:1px solid #DDE6EE;color:#64748B;font-size:14px;font-weight:600;">Minimum Charge</td>
+              <td align="right" style="padding:14px 24px;border-bottom:1px solid #DDE6EE;color:#172033;font-size:15px;font-weight:800;text-align:right;">${escapeHtml(`${pricing.minimumChargeHours} Hours`)}</td>
+            </tr>
+            <tr>
+              <td style="padding:14px 24px;border-bottom:1px solid #DDE6EE;color:#64748B;font-size:14px;font-weight:600;">Callout</td>
+              <td align="right" style="padding:14px 24px;border-bottom:1px solid #DDE6EE;color:#172033;font-size:15px;font-weight:800;text-align:right;">
+                ${escapeHtml(formatDurationMinutes(pricing.calloutTimeMinutes))} &nbsp;|&nbsp; ${escapeHtml(formatCurrency(pricing.calloutCharge))}
+              </td>
+            </tr>
+            <tr style="background:#FAFCFE;">
+              <td style="padding:14px 24px;color:#64748B;font-size:14px;font-weight:600;">Travel Back</td>
+              <td align="right" style="padding:14px 24px;color:#172033;font-size:15px;font-weight:800;text-align:right;">
+                ${escapeHtml(formatDurationMinutes(pricing.travelBackTimeMinutes))} &nbsp;|&nbsp; ${escapeHtml(formatCurrency(pricing.travelBackCharge))}
+              </td>
+            </tr>
+          </table>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="width:100%;margin-top:20px;background:#101D4F;border-top:3px solid #00B9E8;border-radius:16px;">
+            <tr>
+              <td align="center" style="padding:30px 28px;text-align:center;">
+                <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#BFE9F6;">Minimum Estimated Cost</div>
+                <div style="margin:9px auto 0;max-width:520px;color:#A9C1E0;font-size:13px;line-height:20px;">
+                  Includes the minimum booking period, callout and travel-back charges.
+                </div>
+                <div class="total-amount" style="margin-top:14px;color:#ffffff;font-size:46px;line-height:52px;font-weight:900;letter-spacing:-1px;">
+                  ${escapeHtml(formatCurrency(pricing.minimumEstimatedCost))}
+                </div>
+                <div style="margin:18px auto 0;max-width:560px;border-top:1px solid rgba(255,255,255,.14);padding-top:14px;color:#8FA9CC;font-size:12px;line-height:19px;">
+                  Additional time after the minimum booking period is charged in 30-minute increments according to the applicable hourly rate.
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `
+    : '';
+
+  const notesHtml = data.notes
+    ? `
+      <tr>
+        <td class="section-space" style="padding:0 40px 28px;">
+          <div style="margin-bottom:14px;">
+            <div style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Notes</div>
+            <div style="margin-top:3px;font-size:12px;line-height:16px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.8px;">Special Instructions</div>
+          </div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="width:100%;background:#ffffff;border:1px solid #DDE6EE;border-radius:12px;">
+            <tr>
+              <td style="padding:20px 24px;color:#59677A;font-size:13px;line-height:21px;white-space:pre-line;">${escapeHtml(data.notes)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `
+    : '';
+
+  const html = `
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light">
+        <title>Delivery Plus Quotation - ${escapeHtml(jobNumber)}</title>
+
+        <style>
+          body {
+            margin:0 !important;
+            padding:0 !important;
+            background:#EEF4F8 !important;
+            font-family:Arial,Helvetica,sans-serif;
+            -webkit-text-size-adjust:100%;
+            -ms-text-size-adjust:100%;
+          }
+
+          table {
+            border-collapse:separate;
+            border-spacing:0;
+          }
+
+          img {
+            display:block;
+            border:0;
+            outline:none;
+            text-decoration:none;
+          }
+
+          .quotation-document {
+            width:900px !important;
+            max-width:900px !important;
+          }
+
+          @media only screen and (max-width: 920px) {
+            .quotation-document {
+              width:100% !important;
+              max-width:100% !important;
+            }
+
+            .outer-pad {
+              padding:20px 12px !important;
+            }
+          }
+
+          @media only screen and (max-width: 600px) {
+            .outer-pad {
+              padding:0 !important;
+            }
+
+            .quotation-document {
+              width:100% !important;
+              max-width:100% !important;
+              border-radius:0 !important;
+            }
+
+            .header-pad {
+              padding:24px 20px 22px !important;
+            }
+
+            .header-logo,
+            .header-contact {
+              display:block !important;
+              width:100% !important;
+              text-align:left !important;
+            }
+
+            .header-contact {
+              padding-top:18px !important;
+            }
+
+            .intro-pad {
+              padding:30px 20px 26px !important;
+            }
+
+            .reference-pad,
+            .section-space {
+              padding-left:20px !important;
+              padding-right:20px !important;
+            }
+
+            .two-col-cell {
+              display:block !important;
+              width:100% !important;
+              border-right:0 !important;
+              border-bottom:1px solid #DDE6EE !important;
+            }
+
+            .mobile-last {
+              border-bottom:0 !important;
+            }
+
+            .route-marker-cell {
+              width:30px !important;
+            }
+
+            .total-amount {
+              font-size:34px !important;
+              line-height:40px !important;
+            }
+
+            .footer-left,
+            .footer-right {
+              display:block !important;
+              width:100% !important;
+              text-align:left !important;
+            }
+
+            .footer-right {
+              padding-top:10px !important;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="width:100%;background:#EEF4F8;">
+          <tr>
+            <td align="center" class="outer-pad" style="padding:40px 16px 64px;">
+
+              <!--[if mso]>
+              <table role="presentation" width="900" cellpadding="0" cellspacing="0" border="0">
+                <tr><td>
+              <![endif]-->
+
+              <table role="presentation" width="900" cellpadding="0" cellspacing="0" border="0"
+                class="quotation-document"
+                style="width:900px;max-width:900px;background:#ffffff;border:1px solid #DDE6EE;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(16,29,79,.14);">
+
+                <!-- HEADER -->
+                <tr>
+                  <td class="header-pad" style="padding:32px 40px 28px;background:#0D1B4C;border-bottom:3px solid #00B9E8;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="58%" valign="top" class="header-logo">
+                          ${
+                            makeLogoAttachment().length > 0
+                              ? `
+                                <img src="cid:deliveryplus-logo" alt="Delivery Plus" width="220"
+                                  style="width:220px;max-width:100%;height:auto;">
+                              `
+                              : `
+                                <div style="font-size:22px;font-weight:900;color:#ffffff;">
+                                  DELIVERY <span style="color:#00B9E8;">PLUS</span>
+                                </div>
+                              `
+                          }
+                          <div style="margin-top:10px;color:#BFD6EE;font-size:13px;line-height:18px;font-weight:500;">
+                            Trusted Transit at Affordable Prices
+                          </div>
+                        </td>
+
+                        <td width="42%" valign="top" align="right" class="header-contact"
+                          style="text-align:right;color:#ffffff;">
+                          <div style="color:#8FA9CC;font-size:11px;line-height:15px;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Call Us</div>
+                          <div style="margin-top:8px;font-size:14px;line-height:21px;font-weight:700;">☎ 03 7008 5094</div>
+                          <div style="font-size:14px;line-height:21px;font-weight:700;">☎ 04 2479 6524</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- HERO -->
+                <tr>
+                  <td class="intro-pad" style="padding:40px 40px 32px;border-bottom:1px solid #DDE6EE;">
+                    <div style="display:inline-block;padding:6px 14px;background:#E8F8FC;border:1px solid rgba(0,185,232,.35);border-radius:999px;color:#101D4F;font-size:12px;line-height:16px;font-weight:800;text-transform:uppercase;letter-spacing:1px;">
+                      Quotation
+                    </div>
+
+                    <div style="margin-top:18px;color:#101D4F;font-size:30px;line-height:38px;font-weight:900;letter-spacing:-.3px;">
+                      Your Delivery Plus quotation is ready
+                    </div>
+
+                    <div style="margin-top:10px;color:#64748B;font-size:15px;line-height:24px;">
+                      Thank you for choosing Delivery Plus. Please review your relocation details and quotation below.
+                    </div>
+
+                    <div style="margin-top:18px;color:#172033;font-size:15px;line-height:22px;">
+                      Hi <strong>${escapeHtml(customerName)}</strong>,
+                    </div>
+
+                    <div style="margin-top:4px;color:#64748B;font-size:15px;line-height:22px;">
+                      Please review your job details and quotation below.
+                    </div>
+
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
+                      <tr>
+                        <td style="padding:10px 16px;background:#ffffff;border:1px solid #DDE6EE;border-radius:10px;color:#172033;font-size:13px;font-weight:700;">
+                          <a href="https://maps.app.goo.gl/RgeqtH484Hqz1FQY8?g_st=i"
+                            style="color:#172033;text-decoration:none;">
+                            <span style="color:#F5B800;letter-spacing:1px;">★★★★★</span>
+                            &nbsp; Google Reviews
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- QUOTE REFERENCE -->
+                <tr>
+                  <td class="reference-pad" style="padding:30px 40px 32px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="width:100%;background:#E8F8FC;border:1px solid rgba(0,185,232,.30);border-radius:12px;">
+                      <tr>
+                        <td style="padding:20px 24px;">
+                          <div style="font-size:12px;line-height:16px;color:#101D4F;font-weight:800;text-transform:uppercase;letter-spacing:1px;">
+                            Quote Reference
+                          </div>
+                          <div style="margin-top:6px;font-size:24px;line-height:29px;color:#101D4F;font-weight:900;">
+                            ${escapeHtml(jobNumber)}
+                          </div>
+                        </td>
+                        <td width="50" align="center" style="padding:20px 20px;">
+                          <div style="width:10px;height:10px;border-radius:50%;background:#00B9E8;box-shadow:0 0 0 4px rgba(0,185,232,.18);">&nbsp;</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- JOB OVERVIEW -->
+                <tr>
+                  <td class="section-space" style="padding:0 40px 28px;">
+                    <div style="margin-bottom:14px;">
+                      <div style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Job Overview</div>
+                      <div style="margin-top:3px;font-size:12px;line-height:16px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.8px;">Service Details</div>
+                    </div>
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="width:100%;background:#ffffff;border:1px solid #DDE6EE;border-radius:12px;overflow:hidden;">
+                      <tr>
+                        <td width="50%" class="two-col-cell" style="padding:15px 20px;border-right:1px solid #DDE6EE;border-bottom:1px solid #DDE6EE;">
+                          <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Customer</div>
+                          <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(customerName)}</div>
+                        </td>
+                        <td width="50%" class="two-col-cell" style="padding:15px 20px;border-bottom:1px solid #DDE6EE;">
+                          <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Phone</div>
+                          <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(customerPhone)}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="50%" class="two-col-cell" style="padding:15px 20px;border-right:1px solid #DDE6EE;border-bottom:1px solid #DDE6EE;">
+                          <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Email</div>
+                          <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;word-break:break-word;">${escapeHtml(customerEmail)}</div>
+                        </td>
+                        <td width="50%" class="two-col-cell" style="padding:15px 20px;border-bottom:1px solid #DDE6EE;">
+                          <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Job Type</div>
+                          <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;text-transform:capitalize;">${escapeHtml(data.jobType || 'N/A')}</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="50%" class="two-col-cell" style="padding:15px 20px;border-right:1px solid #DDE6EE;">
+                          <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Scheduled Date</div>
+                          <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(scheduledDate)}</div>
+                        </td>
+                        <td width="50%" class="two-col-cell mobile-last" style="padding:15px 20px;">
+                          <div style="font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Scheduled Time</div>
+                          <div style="margin-top:4px;font-size:15px;color:#172033;font-weight:800;">${escapeHtml(scheduledTime)}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- ROUTE -->
+                <tr>
+                  <td class="section-space" style="padding:0 40px 28px;">
+                    <div style="margin-bottom:14px;">
+                      <div style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Pickup &amp; Drop-off</div>
+                    </div>
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="width:100%;background:#ffffff;border:1px solid #DDE6EE;border-radius:12px;">
+                      <tr>
+                        <td class="route-marker-cell" width="44" valign="top" align="center" style="padding:28px 0 0 16px;">
+                          <div style="width:14px;height:14px;border:3px solid #00B9E8;border-radius:50%;background:#ffffff;">&nbsp;</div>
+                          <div style="width:2px;height:48px;margin:5px auto;background:#DDE6EE;">&nbsp;</div>
+                        </td>
+                        <td style="padding:24px 24px 12px 14px;">
+                          <div style="font-size:11px;line-height:15px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.7px;">
+                            <span style="display:inline-block;padding:3px 8px;margin-right:7px;border-radius:999px;background:#E8F8FC;color:#101D4F;">Pickup</span>
+                            Pickup Address
+                          </div>
+                          <div style="margin-top:6px;color:#172033;font-size:16px;line-height:23px;font-weight:800;">
+                            ${escapeHtml(pickupAddress)}
+                          </div>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td class="route-marker-cell" width="44" valign="top" align="center" style="padding:4px 0 24px 16px;">
+                          <div style="width:14px;height:14px;border:3px solid #101D4F;border-radius:50%;background:#101D4F;">&nbsp;</div>
+                        </td>
+                        <td style="padding:5px 24px 24px 14px;">
+                          <div style="font-size:11px;line-height:15px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.7px;">
+                            <span style="display:inline-block;padding:3px 8px;margin-right:7px;border-radius:999px;background:#101D4F;color:#ffffff;">Drop-off</span>
+                            Drop-off Address
+                          </div>
+                          <div style="margin-top:6px;color:#172033;font-size:16px;line-height:23px;font-weight:800;">
+                            ${escapeHtml(dropAddress)}
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                ${movingDetailsHtml}
+
+                <!-- BOOKING DEPOSIT -->
+                <tr>
+                  <td class="section-space" style="padding:0 40px 28px;">
+                    <div style="margin-bottom:14px;">
+                      <div style="font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Booking Deposit</div>
+                    </div>
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="width:100%;background:#E8F8FC;border:1px solid rgba(0,185,232,.30);border-radius:12px;">
+                      <tr>
+                        <td style="padding:22px 24px;">
+                          <div style="font-size:15px;line-height:20px;font-weight:900;color:#101D4F;">Secure your booking</div>
+                          <div style="margin-top:6px;color:#64748B;font-size:13px;line-height:21px;">
+                            To confirm your booking, the deposit below is required. This amount will be adjusted against the final payment once the job is completed.
+                          </div>
+                        </td>
+                        <td width="180" align="right" style="padding:22px 24px;color:#101D4F;font-size:26px;line-height:31px;font-weight:900;text-align:right;white-space:nowrap;">
+                          ${escapeHtml(formatCurrency(depositAmount))}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- PAYMENT NOTICE -->
+                <tr>
+                  <td class="section-space" style="padding:0 40px 28px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="width:100%;background:#FFF8E7;border:1px solid #F0DFA6;border-left:4px solid #F5B800;border-radius:12px;">
+                      <tr>
+                        <td width="52" valign="top" align="center" style="padding:20px 8px 20px 20px;">
+                          <div style="width:26px;height:26px;border-radius:50%;background:#F5B800;color:#0D1B4C;font-weight:900;font-size:14px;line-height:26px;text-align:center;">!</div>
+                        </td>
+                        <td style="padding:20px 24px 20px 10px;">
+                          <div style="font-size:15px;font-weight:900;color:#101D4F;">Important Payment Notice</div>
+                          <div style="margin-top:6px;font-size:13px;line-height:21px;color:#6B5A1E;">
+                            Payment must be made when approximately 75% of the truck has been unloaded at the delivery address.
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                ${notesHtml}
+
+                <!-- TERMS -->
+                <tr>
+                  <td class="section-space" style="padding:0 40px 28px;">
+                    <div style="margin-bottom:14px;">
+                      <div style="font-size:12px;line-height:16px;font-weight:800;color:#00B9E8;text-transform:uppercase;letter-spacing:1px;">Please Read</div>
+                      <div style="margin-top:4px;font-size:20px;line-height:25px;font-weight:800;color:#101D4F;">Terms &amp; Conditions</div>
+                    </div>
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="width:100%;background:#ffffff;border:1px solid #DDE6EE;border-radius:12px;">
+                      <tr>
+                        <td style="padding:8px 24px;">
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">1. Payment:</strong> All payments must be made via cash, EFTPOS, or cleared bank transfer before or upon pickup. No work will commence without payment confirmation.</div>
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">2. Claims and Complaints:</strong> No claims will be entertained once the driver has left the pickup or delivery address. Any issues must be reported before departure.</div>
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">3. Fragile Items and Customer-Packed Boxes:</strong> Delivery Plus Australia holds no responsibility for fragile or loose items such as glassware, mirrors, or goods packed by the customer.</div>
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">4. Stairs and Tolls:</strong> All toll fees and stair-related access charges are to be paid by the customer unless otherwise stated in the quote.</div>
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">5. Hard Access Properties:</strong> Additional charges may apply for difficult access including long carry distances, steep driveways, or narrow access.</div>
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">6. Cubic Metre Limit:</strong> The customer is allocated the truck space quoted. Additional charges may apply if the load exceeds the quoted volume.</div>
+                          <div style="padding:16px 0;border-bottom:1px solid #DDE6EE;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">7. TVs, Electronics and Fragile Goods:</strong> Please refer to the detailed Terms &amp; Conditions supplied with the booking confirmation for limitations relating to fragile and sensitive goods.</div>
+                          <div style="padding:16px 0;font-size:13px;line-height:21px;color:#64748B;"><strong style="color:#172033;">8. Property Access and Damage Waiver:</strong> Where stairs or difficult access exist, the applicable damage waiver and access conditions apply.</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- SIGN OFF -->
+                <tr>
+                  <td class="section-space" style="padding:4px 40px 32px;">
+                    <div style="font-size:14px;line-height:22px;color:#172033;">
+                      Regards,<br>
+                      <strong style="color:#101D4F;">Anu</strong><br>
+                      Team Delivery Plus
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td style="padding:22px 40px;background:#0D1B4C;border-top:3px solid #00B9E8;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="60%" class="footer-left" style="color:#8FA9CC;font-size:12px;line-height:19px;">
+                          <strong style="color:#ffffff;">Delivery Plus Australia</strong><br>
+                          Trusted Transit at Affordable Prices
+                        </td>
+                        <td width="40%" align="right" class="footer-right" style="color:#BFD6EE;font-size:12px;line-height:19px;text-align:right;">
+                          03 7008 5094<br>
+                          04 2479 6524
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+              </table>
+
+              <!--[if mso]>
+              </td></tr></table>
+              <![endif]-->
+
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+
+  const text = [
+    `Hi ${customerName},`,
+    '',
+    'Your Delivery Plus quotation is ready.',
+    `Quote Reference: ${jobNumber}`,
+    `Customer: ${customerName}`,
+    `Phone: ${customerPhone}`,
+    `Email: ${customerEmail}`,
+    `Job Type: ${data.jobType || 'N/A'}`,
+    `Scheduled Date: ${scheduledDate}`,
+    `Scheduled Time: ${scheduledTime}`,
+    `Pickup: ${pickupAddress}`,
+    `Drop-off: ${dropAddress}`,
+    ...(data.isMovingJob
+      ? [
+          `Truck Size: ${truckSize}`,
+          `Movers: ${movers}`,
+          `Size of Property: ${propertySizeText}`,
+          `List of Items: ${itemListText}`,
+          `Hourly Rate: ${priceLabel}`,
+          `Minimum Charge: ${pricing.minimumChargeHours} Hours`,
+          `Callout: ${formatDurationMinutes(pricing.calloutTimeMinutes)} | ${formatCurrency(pricing.calloutCharge)}`,
+          `Travel Back: ${formatDurationMinutes(pricing.travelBackTimeMinutes)} | ${formatCurrency(pricing.travelBackCharge)}`,
+          `Minimum Estimated Cost: ${formatCurrency(pricing.minimumEstimatedCost)}`,
+        ]
+      : []),
+    `Booking Deposit: ${formatCurrency(depositAmount)}`,
+    '',
+    'Regards,',
+    'Anu',
+    'Team Delivery Plus',
+    '03 7008 5094 / 04 2479 6524',
+  ].join('\n');
+
+  return {
+    subject: `Delivery Plus Quotation – ${jobNumber}`,
+    html,
+    text,
+    attachments: quotationAttachments,
+  };
+};
+
+// ---------------------------------------------------------------------------
+// BOOKING CONFIRMATION EMAIL
+// ---------------------------------------------------------------------------
+
+export const buildBookingConfirmationEmail = (job = {}, { attachments = [] } = {}) => {
+  const jobNumber =
+    displayValue(
+      firstValue(
+        job.jobNumber,
+        job.quoteRef,
+      ),
+    );
+
+  const customerName =
+    displayValue(
+      firstValue(
+        job.customerName,
+        'Customer',
+      ),
+    );
+
+  const pickupAddress =
+    getCanonicalPickupAddress(job);
+
+  const dropAddress =
+    getCanonicalDropAddress(job);
+
+  const scheduledDate =
+    formatDate(job.scheduledDate);
+
+  const scheduledTime =
+    job.scheduleMode === 'window'
+      ? `${formatTime(job.scheduledStartTime)} - ${formatTime(job.scheduledEndTime)}`
+      : formatTime(job.scheduledTime);
+
+  const pricing =
+    getPricingObject(job);
+
+  const pricingType =
+    String(job.pricingType || '')
+      .toLowerCase();
+
+  const fixedPrice =
+    toNumber(
+      firstValue(
+        job.fixedPrice,
+        job.fixedQuote,
+        job.quoteAmount,
+        job.pricing?.fixedPrice,
+      ),
+    );
+
+  const rawTruckSize =
+    firstValue(
+      job.truckSize,
+      job.vehicleSize,
+      job.truckType,
+      job.truckSizeCount,
+    );
+
+  const truckSize =
+    formatTruckSize(rawTruckSize);
+
+  const movers =
+    firstValue(
+      job.movers,
+      job.numberOfMovers,
+      job.moverCount,
+    );
+
+  const deposit =
+    toNumber(
+      firstValue(
+        job.bookingDepositAmount,
+        job.confirmationAmount,
+        job.depositAmount,
+      ),
+    );
+
+  if (
+    !Number.isFinite(deposit) ||
+    deposit <= 0
+  ) {
+    throw new Error(
+      'Valid booking deposit amount is required',
+    );
+  }
+
+  const priceValue =
+    pricingType === 'fixed'
+      ? formatCurrency(fixedPrice)
+      : formatCurrency(pricing.hourlyRate);
+
+  const bodyHtml = `
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="width:100%;"
+    >
+      <!-- DEPOSIT RECEIVED -->
+      <tr>
+        <td style="padding:0 0 18px;">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="
+              width:100%;
+              background:linear-gradient(135deg,#eafcf5 0%,#e2f7ee 100%);
+              border:1px solid #c9ecd9;
+              border-radius:12px;
+            "
+          >
+            <tr>
+              <td style="padding:18px 20px;">
+                <div class="font-body" style="color:#0f766e;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;">
+                  ✓ Deposit Received
+                </div>
+
+                <div class="font-display total-value" style="margin-top:5px;color:#0b163d;font-size:28px;font-weight:900;">
+                  ${escapeHtml(formatCurrency(deposit))}
+                </div>
+
+                <div class="font-body" style="margin-top:4px;color:#0f766e;font-size:12px;font-weight:600;">
+                  Status: Received / Confirmed
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:0 0 18px;color:#58667a;font-size:14px;line-height:22px;" class="font-body">
+          Hi
+          <strong style="color:#172033;">
+            ${escapeHtml(customerName)}
+          </strong>,
+          <br /><br />
+
+          This email confirms that we received your booking deposit of
+          <strong>
+            ${escapeHtml(formatCurrency(deposit))}
+          </strong>.
+          This amount will be adjusted in the total move cost at the
+          time of final payment.
+        </td>
+      </tr>
+
+      <!-- SERVICE DETAILS -->
+      <tr>
+        <td style="padding:0 0 18px;">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="width:100%;border:1px solid #e6ecf5;border-radius:12px;overflow:hidden;"
+          >
+            <tr>
+              <td class="font-display" style="padding:15px 18px;background:#f7f9fd;border-bottom:1px solid #e6ecf5;color:#0b163d;font-size:15px;font-weight:800;">
+                Service Details
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:6px 18px 8px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="font-body">
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Quote Reference</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(jobNumber)}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Phone</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(displayValue(job.customerPhone))}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Truck Size</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(truckSize)}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Movers</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(displayValue(movers))}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Price</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(priceValue)}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Callout</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(formatDurationMinutes(pricing.calloutTimeMinutes))} | ${escapeHtml(formatCurrency(pricing.calloutCharge))}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#69768a;font-size:12.5px;">Travel Back</td>
+                    <td align="right" style="padding:11px 0;border-bottom:1px solid #eef2f7;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(formatDurationMinutes(pricing.travelBackTimeMinutes))} | ${escapeHtml(formatCurrency(pricing.travelBackCharge))}</td>
+                  </tr>
+                  <tr class="kv-row">
+                    <td style="padding:11px 0;color:#69768a;font-size:12.5px;">Date &amp; Time</td>
+                    <td align="right" style="padding:11px 0;color:#172033;font-size:12.5px;font-weight:700;text-align:right;">${escapeHtml(scheduledDate)}, ${escapeHtml(scheduledTime)}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- ROUTE / JOURNEY -->
+      <tr>
+        <td style="padding:0 0 18px;">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="width:100%;border:1px solid #e6ecf5;border-radius:12px;overflow:hidden;"
+          >
+            <tr>
+              <td class="font-display" style="padding:15px 18px;background:#f7f9fd;border-bottom:1px solid #e6ecf5;color:#0b163d;font-size:15px;font-weight:800;">
+                🚚 Your Journey
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:22px 20px 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td width="26" valign="top" style="padding-top:2px;">
+                      <div style="width:14px;height:14px;border-radius:50%;background:#f0a93f;border:3px solid #fde5bd;"></div>
+                      <div style="width:2px;height:46px;margin:2px 0 2px 6px;background:repeating-linear-gradient(to bottom,#c9d3e2 0,#c9d3e2 4px,transparent 4px,transparent 8px);"></div>
+                    </td>
+                    <td style="padding-left:12px;padding-bottom:6px;">
+                      <div class="font-body" style="color:#b37b10;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;">
+                        Pickup Address
+                      </div>
+                      <div class="font-body" style="margin-top:4px;color:#172033;font-size:13px;line-height:20px;font-weight:700;">
+                        ${escapeHtml(pickupAddress || 'N/A')}
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td width="26" valign="top">
+                      <div style="width:14px;height:14px;border-radius:50%;background:#e0483d;border:3px solid #fad3cf;"></div>
+                    </td>
+                    <td style="padding-left:12px;">
+                      <div class="font-body" style="color:#ce4747;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;">
+                        Drop-off Address
+                      </div>
+                      <div class="font-body" style="margin-top:4px;color:#172033;font-size:13px;line-height:20px;font-weight:700;">
+                        ${escapeHtml(dropAddress || 'N/A')}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- LIST OF ITEMS -->
+      <tr>
+        <td style="padding:0 0 6px;">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="width:100%;border:1px solid #e6ecf5;border-radius:12px;overflow:hidden;"
+          >
+            <tr>
+              <td class="font-display" style="padding:15px 18px;background:#f7f9fd;border-bottom:1px solid #e6ecf5;color:#0b163d;font-size:15px;font-weight:800;">
+                List of Items
+              </td>
+            </tr>
+
+            <tr>
+              <td class="font-body" style="padding:16px 18px;color:#526176;font-size:12.5px;line-height:20px;">
+                ${escapeHtml(formatItemList(job))}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          ${renderTermsAndConditions()}
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const layout = renderEmailLayout({
+    subject:
+      `Delivery Plus Booking Confirmation – ${jobNumber}`,
+
+    heading:
+      'Your booking is confirmed',
+
+    intro:
+      'This email confirms your booking and the deposit received for your move.',
+
+    accentText:
+      '✓ Booking Confirmation',
+
+    bodyHtml,
+
+    accentColor:
+      '#0F766E',
+
+    badgeGradient:
+      'linear-gradient(135deg, #0f766e 0%, #12A78A 100%)',
+    attachments,
+  });
+
+  const text = [
+    `Hi ${customerName},`,
+    '',
+    `This email confirms that we received your booking deposit of ${formatCurrency(deposit)}.`,
+    `Quote Reference: ${jobNumber}`,
+    `Pickup: ${pickupAddress}`,
+    `Drop-off: ${dropAddress}`,
+    `Scheduled Date: ${scheduledDate}`,
+    `Scheduled Time: ${scheduledTime}`,
+    `Truck Size: ${truckSize}`,
+    `Movers: ${displayValue(movers)}`,
+    `Callout: ${formatDurationMinutes(
+      pricing.calloutTimeMinutes,
+    )} | ${formatCurrency(
+      pricing.calloutCharge,
+    )}`,
+    `Travel Back: ${formatDurationMinutes(
+      pricing.travelBackTimeMinutes,
+    )} | ${formatCurrency(
+      pricing.travelBackCharge,
+    )}`,
+    '',
+    'Regards,',
+    'Team Delivery Plus',
+  ].join('\n');
+
+  return {
+    subject: layout.subject,
+    html: layout.html,
+    text,
+    attachments: layout.attachments,
+  };
+};

@@ -193,13 +193,9 @@
   <div class="section" id="rate-limits">
     <div class="section-title">Rate Limits</div>
     <div class="rate-info">
-      ⚡ <strong>/api/auth/*</strong> — Max <strong>10 requests</strong> per 15 minutes (brute force protection)<br/>
-      <span>⚡ <strong>All other /api/*</strong> — Max <strong>200 requests</strong> per 15 minutes per IP</span>
+      ⚡ <strong>/api/auth/login</strong> — Direct unthrottled login (No lockout or 15-minute freeze)<br/>
+      <span>⚡ <strong>General API /api/*</strong> — Standard API rate protection</span>
     </div>
-    <pre>{
-  "success": false,
-  "message": "Too many login attempts, please try again after 15 minutes."
-}</pre>
   </div>
 
   <!-- AUTH -->
